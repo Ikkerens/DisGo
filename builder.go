@@ -14,27 +14,22 @@ var (
 	TypeBot    = TokenType{"Bot"}
 )
 
-type gateWayResponse struct {
-	Url    string `json:"url,omitempty"`
-	Shards int    `json:"shards,omitempty"`
-}
-
-func WithToken(tokenType TokenType, token string) (*Session, error) {
-	logger.Trace("WithToken() called")
+func BuildWithToken(tokenType TokenType, token string) (*Session, error) {
+	logger.Trace("BuildWithToken() called")
 
 	if token == "" {
 		return nil, errors.New("Configuration.Token cannot be empty")
 	}
 
-	session := &Session{authorization: tokenType.prefix + " " + token}
+	session := &Session{valid: true, tokenType: tokenType, token: token}
 
-	gateway := gateWayResponse{}
+	gateway := gatewayGetResponse{}
 	err := session.doHttpGet(EndPointBotGateway, &gateway)
 	if err != nil {
 		return nil, err
 	}
 
-	session.wsUrl = gateway.Url
+	session.wsUrl = gateway.Url + "?v=5&encoding=json"
 	session.shards = gateway.Shards
 
 	return session, nil

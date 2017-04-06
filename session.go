@@ -2,16 +2,38 @@ package disgo
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 
+	"github.com/gorilla/websocket"
 	"github.com/slf4go/logger"
 )
 
 type Session struct {
-	authorization string
-	wsUrl         string
-	shards        int
+	valid bool
+
+	token     string
+	tokenType TokenType
+	wsUrl     string
+	shards    int
+
+	webSocket  *websocket.Conn
+	sequence   int
+	heartbeat  int
+	stopListen chan bool
+}
+
+func (s *Session) checkValid() {
+	if !s.valid {
+		caller, _, _, _ := runtime.Caller(1)
+		panic(fmt.Sprintf("%s() requires a valid Session", runtime.FuncForPC(caller).Name()))
+	}
+}
+
+func (s *Session) authorizationHeader() string {
+	return s.tokenType.prefix + " " + s.token
 }
 
 func (s *Session) doHttpGet(url string, target interface{}) error {
@@ -27,7 +49,7 @@ func (s *Session) doHttpGet(url string, target interface{}) error {
 		return err
 	}
 
-	req.Header.Add("Authorization", s.authorization)
+	req.Header.Add("Authorization", s.authorizationHeader())
 	req.Header.Add("User-Agent", "DiscordBot (https://github.com/ikkerens/disgo, 1.0.0)")
 
 	var resp *http.Response
