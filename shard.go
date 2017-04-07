@@ -160,6 +160,8 @@ func (s *Shard) mainLoop() {
 				s.sendFrame(&gatewayFrame{Op: opHeartbeatAck})
 			case opHeartbeatAck:
 				sentHeartBeat = false
+			case opReconnect:
+				s.disconnect(websocket.CloseNormalClosure, "op Reconnect")
 			case opDispatch:
 				s.session.dispatchEvent(frame)
 			default:
