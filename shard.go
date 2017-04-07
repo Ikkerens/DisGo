@@ -16,6 +16,7 @@ import (
 )
 
 type Shard struct {
+	session    *Session
 	webSocket  *websocket.Conn
 	sequence   int
 	heartbeat  int
@@ -28,7 +29,7 @@ func connectShard(session *Session, shard int) (*Shard, error) {
 		return nil, err
 	}
 
-	s := &Shard{webSocket: conn, stopListen: make(chan bool)}
+	s := &Shard{session: session, webSocket: conn, stopListen: make(chan bool)}
 
 	helloFrame, err := s.readFrame()
 	if err != nil {
@@ -102,13 +103,7 @@ listenLoop:
 			case opHeartbeatAck:
 				sentHeartBeat = false
 			case opDispatch:
-				logger.Infof("Received event %s", message.EventName)
-				switch message.EventName {
-				case "READY":
-					event := ReadyEvent{}
-					json.Unmarshal(message.Data, &event)
-					logger.Infof("ReadyEvent: %+v for user: %s", event, event.User.Username())
-				}
+				s.session.dispatchEvent(message)
 			default:
 				logger.Errorf("Invalid opCode received: %d", opCode)
 			}
