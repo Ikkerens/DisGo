@@ -56,3 +56,9 @@ type propertiesPayload struct {
 	Referrer        string `json:"$referrer"`
 	ReferringDomain string `json:"$referring_domain"`
 }
+
+type resumePayload struct {
+	Token     string `json:"token"`
+	SessionID string `json:"session_id"`
+	Sequence  int    `json:"seq"`
+}

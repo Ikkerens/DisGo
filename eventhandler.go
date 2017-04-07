@@ -50,7 +50,7 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 	zeroEvent := eventInstance.(Event)
 
 	wrapper := func(session *Session, event Event) {
-		handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(event).Elem().Convert(eventType)})
+		go handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(event).Elem().Convert(eventType)})
 	}
 
 	list, exists := handlers[zeroEvent.EventName()]

@@ -5,6 +5,7 @@ import (
 	"compress/zlib"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"runtime"
@@ -16,11 +17,17 @@ import (
 )
 
 type Shard struct {
-	session    *Session
-	webSocket  *websocket.Conn
-	sequence   int
-	heartbeat  int
-	stopListen chan bool
+	session *Session
+
+	webSocket *websocket.Conn
+	shard     int
+	sessionID string
+	sequence  int
+	heartbeat int
+
+	closeMessage chan int
+	stopListen   chan bool
+	stopRead     chan bool
 }
 
 func connectShard(session *Session, shard int) (*Shard, error) {
@@ -29,103 +36,166 @@ func connectShard(session *Session, shard int) (*Shard, error) {
 		return nil, err
 	}
 
-	s := &Shard{session: session, webSocket: conn, stopListen: make(chan bool)}
+	s := &Shard{
+		session:      session,
+		webSocket:    conn,
+		shard:        shard,
+		closeMessage: make(chan int, 1),
+		stopListen:   make(chan bool),
+		stopRead:     make(chan bool),
+	}
+
+	if err = s.handshake(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func (s *Shard) handshake() error {
+	s.webSocket.SetCloseHandler(s.onClose)
 
 	helloFrame, err := s.readFrame()
 	if err != nil {
-		return nil, err
+		return err
 	} else if helloFrame.Op != opHello {
-		return nil, errors.New("First frame sent from the Discord Gateway is not hello")
+		return errors.New("First frame sent from the Discord Gateway is not hello")
 	}
 
 	hello := helloPayload{}
-	err = json.Unmarshal(helloFrame.Data, &hello)
-	if err != nil {
-		return nil, err
+	if err = json.Unmarshal(helloFrame.Data, &hello); err != nil {
+		return err
 	}
 
 	logger.Debugf("Connected to Discord servers: %s", strings.Join(hello.Servers, ", "))
 	logger.Debugf("Setting up a heartbeat interval of %d ms", hello.HeartbeatInterval)
 	s.heartbeat = hello.HeartbeatInterval
-	go s.listen()
 
-	s.sendFrame(&gatewayFrame{opIdentify, identifyPayload{
-		Token:          session.token,
-		Compress:       true,
-		LargeThreshold: 250,
-		Shard:          [2]int{shard, cap(session.shards)},
-		Properties: propertiesPayload{
-			OS:      runtime.GOOS,
-			Browser: "DisGo",
-			Device:  "DisGo",
-		},
-	}})
+	if err = s.identify(); err != nil {
+		return err
+	}
 
-	return s, nil
+	go s.mainLoop()
+	return nil
 }
 
-func (s *Shard) disconnect() {
-	if s.webSocket != nil {
-		s.stopListen <- true
-		s.webSocket = nil
+func (s *Shard) identify() error {
+	if s.sessionID != "" {
+		logger.Debugf("Resuming connectiong starting at sequence %d.", s.sequence)
+		s.sendFrame(&gatewayFrame{opResume, resumePayload{
+			Token:     s.session.token,
+			SessionID: s.sessionID,
+			Sequence:  s.sequence,
+		}})
+	} else {
+		logger.Debugf("Identifying to websocket")
+		s.sendFrame(&gatewayFrame{opIdentify, identifyPayload{
+			Token:          s.session.token,
+			Compress:       true,
+			LargeThreshold: 250,
+			Shard:          [2]int{s.shard, cap(s.session.shards)},
+			Properties: propertiesPayload{
+				OS:      runtime.GOOS,
+				Browser: "DisGo",
+				Device:  "DisGo",
+			},
+		}})
+	}
+
+	frame, err := s.readFrame()
+	if err != nil {
+		return err
+	}
+
+	if frame.Op == opDispatch {
+		if frame.EventName == "READY" {
+			ready := ReadyEvent{}
+			if err := json.Unmarshal(frame.Data, &ready); err != nil {
+				return err
+			}
+
+			s.sessionID = ready.SessionID
+			s.session.dispatchEvent(frame)
+			return nil
+		} else if frame.EventName == "RESUMED" {
+			s.session.dispatchEvent(frame)
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("Discord sent event of type '%s', expected 'READY'", frame.EventName))
+		}
+	} else if frame.Op == opInvalidSession {
+		s.sessionID = "" // Invalidate session and retry
+		s.identify()
+		return nil
+	} else {
+		return errors.New(fmt.Sprintf("Unexpected opCode received from Discord: %d", frame.Op))
 	}
 }
 
-func (s *Shard) listen() {
-	defer s.webSocket.Close()
+func (s *Shard) mainLoop() {
+	logger.Debugf("Starting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
+	defer logger.Debugf("Exiting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 
 	heartbeat := time.NewTicker(time.Duration(s.heartbeat) * time.Millisecond)
+	defer heartbeat.Stop()
+	sentHeartBeat := false
 
 	reader := make(chan *receivedFrame)
 	go s.readWebSocket(reader)
 
-	var sentHeartBeat = false
-
-listenLoop:
 	for {
 		select {
 		case <-heartbeat.C:
-			logger.Debug("Sending heartbeat")
-			s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
+			if !sentHeartBeat {
+				s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
+				sentHeartBeat = true
+			} else {
+				s.disconnect(websocket.CloseAbnormalClosure, "Did not respond to previous ping")
+			}
 		case <-s.stopListen:
-			break listenLoop
-		case message := <-reader:
-			switch opCode := message.Op; opCode {
+			return
+		case frame := <-reader:
+			switch opCode := frame.Op; opCode {
 			case opHeartbeat:
-				if !sentHeartBeat {
-					s.sendFrame(&gatewayFrame{Op: opHeartbeatAck})
-					sentHeartBeat = true
-				} else {
-					// TODO Disconnect and reconnect
-				}
+				s.sendFrame(&gatewayFrame{Op: opHeartbeatAck})
 			case opHeartbeatAck:
 				sentHeartBeat = false
 			case opDispatch:
-				s.session.dispatchEvent(message)
+				s.session.dispatchEvent(frame)
 			default:
-				logger.Errorf("Invalid opCode received: %d", opCode)
+				logger.Errorf("Unknown opCode received: %d", opCode)
 			}
 		}
 	}
-
-	heartbeat.Stop()
 }
 
 func (s *Shard) sendFrame(frame *gatewayFrame) {
-	logger.Debugf("Sending frame: %+v", frame)
+	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
 }
 
 func (s *Shard) readWebSocket(reader chan *receivedFrame) {
-	for {
-		frame, err := s.readFrame()
-		if err != nil {
-			s.stopListen <- true
-			break
-		}
+	logger.Debugf("Starting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
+	defer logger.Debugf("Exiting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 
-		reader <- frame
+	for {
+		select {
+		case <-s.stopRead:
+			return
+		default:
+			frame, err := s.readFrame()
+			if err != nil {
+				if !s.session.shuttingDown {
+					go s.disconnect(websocket.CloseAbnormalClosure, err.Error())
+				}
+				<-s.stopRead // Wait for the connection to be closed
+				return
+			}
+
+			reader <- frame
+		}
 	}
+
 }
 
 func (s *Shard) readFrame() (*receivedFrame, error) {
@@ -151,14 +221,57 @@ func (s *Shard) readFrame() (*receivedFrame, error) {
 	frame := receivedFrame{Sequence: -1}
 	json.NewDecoder(reader).Decode(&frame)
 
-	logger.Debugf("Received frame: %+v", struct {
-		Op        opCode
-		Sequence  int
-		EventName string
-	}{frame.Op, frame.Sequence, frame.EventName})
+	logger.Debugf("Received frame with opCode: %d", frame.Op)
 
 	if frame.Sequence != -1 {
+		logger.Tracef("Last sequence received set to %d.", frame.Sequence)
 		s.sequence = frame.Sequence
 	}
 	return &frame, nil
+}
+
+func (s *Shard) reconnect() {
+	if !s.session.shuttingDown {
+		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
+		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
+
+		if err == nil {
+			s.webSocket = conn
+			err = s.handshake()
+		}
+
+		if err != nil {
+			logger.ErrorE(err)
+			time.Sleep(1 * time.Second)
+			go s.reconnect()
+		}
+	}
+}
+
+func (s *Shard) onClose(code int, text string) error {
+	logger.Infof("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
+	s.closeMessage <- code
+	s.reconnect()
+	return nil
+}
+
+func (s *Shard) disconnect(code int, text string) {
+	s.stopListen <- true
+
+	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
+	if err != nil {
+		logger.ErrorE(err)
+	}
+
+	select {
+	case code := <-s.closeMessage:
+		logger.Infof("Discord connection closed with code %d", code)
+	case <-time.After(1 * time.Second):
+		logger.Warn("Discord did not reply to the close message, force-closing connection.")
+	}
+
+	s.webSocket.Close()
+	s.stopRead <- true
+
+	s.reconnect()
 }

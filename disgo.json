@@ -50,7 +50,7 @@
             "messageUpdate": "no",
             "presenceReceive": "no",
             "presenceSend": "no",
-            "resume": "no",
+            "resume": "yes",
             "roleCreate": "no",
             "roleDelete": "no",
             "roleUpdate": "no",
@@ -69,8 +69,8 @@
         },
         "misc": {
             "userLoginWithPassword": "no",
-            "userLoginWithToken": "no",
-            "botLogin": "no",
+            "userLoginWithToken": "yes", // Needs test
+            "botLogin": "yes",
             "cachesTokens": "no",
             "apiDocs": "",
             "apiDocsUrl": "",
@@ -78,7 +78,7 @@
             "tutorialsUrl": "",
             "examples": "no",
             "examplesUrl": "",
-            "eventsAsync": "no",
+            "eventsAsync": "yes",
             "apiCallsAsync": "no",
             "commandExtension": "no",
             "badges": []
