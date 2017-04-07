@@ -50,7 +50,7 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 	zeroEvent := eventInstance.(Event)
 
 	wrapper := func(session *Session, event Event) {
-		handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(event).Convert(eventType)})
+		handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(event).Elem().Convert(eventType)})
 	}
 
 	list, exists := handlers[zeroEvent.EventName()]
@@ -66,13 +66,17 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 
 	switch frame.EventName {
 	case "READY":
-		event = ReadyEvent{}
+		event = &ReadyEvent{}
 	default:
 		logger.Errorf("Event with name '%s' was dispatched by Discord, but we don't know this event. (DisGo outdated?)", frame.EventName)
 		return
 	}
 
-	json.Unmarshal(frame.Data, &event)
+	err := json.Unmarshal(frame.Data, &event)
+	if err != nil {
+		logger.ErrorE(err)
+		return
+	}
 
 	handlerSlice, exists := handlers[event.EventName()]
 	if exists {

@@ -49,7 +49,7 @@ func connectShard(session *Session, shard int) (*Shard, error) {
 	s.heartbeat = hello.HeartbeatInterval
 	go s.listen()
 
-	conn.WriteJSON(gatewayFrame{opIdentify, identifyPayload{
+	s.sendFrame(&gatewayFrame{opIdentify, identifyPayload{
 		Token:          session.token,
 		Compress:       true,
 		LargeThreshold: 250,
@@ -74,10 +74,9 @@ func (s *Shard) disconnect() {
 func (s *Shard) listen() {
 	defer s.webSocket.Close()
 
-	s.stopListen = make(chan bool)
 	heartbeat := time.NewTicker(time.Duration(s.heartbeat) * time.Millisecond)
-	reader := make(chan *receivedFrame)
 
+	reader := make(chan *receivedFrame)
 	go s.readWebSocket(reader)
 
 	var sentHeartBeat = false
@@ -87,15 +86,14 @@ listenLoop:
 		select {
 		case <-heartbeat.C:
 			logger.Debug("Sending heartbeat")
-			s.webSocket.WriteJSON(gatewayFrame{opHeartbeat, s.sequence})
+			s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
 		case <-s.stopListen:
 			break listenLoop
 		case message := <-reader:
 			switch opCode := message.Op; opCode {
 			case opHeartbeat:
 				if !sentHeartBeat {
-					logger.Debug("Sending heartbeat Ack")
-					s.webSocket.WriteJSON(gatewayFrame{Op: opHeartbeatAck})
+					s.sendFrame(&gatewayFrame{Op: opHeartbeatAck})
 					sentHeartBeat = true
 				} else {
 					// TODO Disconnect and reconnect
@@ -111,6 +109,11 @@ listenLoop:
 	}
 
 	heartbeat.Stop()
+}
+
+func (s *Shard) sendFrame(frame *gatewayFrame) {
+	logger.Debugf("Sending frame: %+v", frame)
+	s.webSocket.WriteJSON(frame)
 }
 
 func (s *Shard) readWebSocket(reader chan *receivedFrame) {
@@ -145,7 +148,7 @@ func (s *Shard) readFrame() (*receivedFrame, error) {
 		reader = zReader
 	}
 
-	frame := receivedFrame{}
+	frame := receivedFrame{Sequence: -1}
 	json.NewDecoder(reader).Decode(&frame)
 
 	logger.Debugf("Received frame: %+v", struct {
@@ -154,7 +157,7 @@ func (s *Shard) readFrame() (*receivedFrame, error) {
 		EventName string
 	}{frame.Op, frame.Sequence, frame.EventName})
 
-	if frame.Sequence != 0 {
+	if frame.Sequence != -1 {
 		s.sequence = frame.Sequence
 	}
 	return &frame, nil

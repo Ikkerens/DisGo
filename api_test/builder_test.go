@@ -29,6 +29,6 @@ func TestBuilder(t *testing.T) {
 	<-ch
 }
 
-func onReady(_ *disgo.Session, _ disgo.ReadyEvent) {
-	logger.Info("onReady was called!")
+func onReady(_ *disgo.Session, event disgo.ReadyEvent) {
+	logger.Infof("onReady was called, logged in as %s with ID %d!", event.User.Username(), event.User.ID())
 }
