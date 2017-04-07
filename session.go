@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gorilla/websocket"
 	"github.com/slf4go/logger"
 )
 
@@ -17,12 +16,15 @@ type Session struct {
 	token     string
 	tokenType TokenType
 	wsUrl     string
-	shards    int
+	shards    []*Shard
+}
 
-	webSocket  *websocket.Conn
-	sequence   int
-	heartbeat  int
-	stopListen chan bool
+func (s *Session) Close() {
+	for _, sh := range s.shards {
+		if  sh != nil {
+			sh.disconnect()
+		}
+	}
 }
 
 func (s *Session) checkValid() {

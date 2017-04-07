@@ -16,23 +16,19 @@ func init() {
 }
 
 func TestBuilder(t *testing.T) {
-	session, err := disgo.BuildWithToken(disgo.TypeBot, token)
+	discord, err := disgo.LoginWithToken(disgo.TypeBot, token)
 	if err != nil {
 		logger.ErrorE(err)
 		t.FailNow()
 		return
 	}
-	session.Open()
-	session.Close()
+
+	discord.RegisterEventHandler(onReady)
+
+	ch := make(chan bool)
+	<-ch
 }
 
-func TestInvalidSessionCheck(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.FailNow()
-		}
-	}()
+func onReady(_ *disgo.Session, _ *disgo.ReadyEvent) {
 
-	session := disgo.Session{}
-	session.Close()
 }

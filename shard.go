@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"runtime"
@@ -14,31 +15,44 @@ import (
 	"github.com/slf4go/logger"
 )
 
-func (s *Session) Open() error {
-	s.checkValid()
-	logger.Trace("Open() called")
+type Shard struct {
+	webSocket  *websocket.Conn
+	sequence   int
+	heartbeat  int
+	stopListen chan bool
+}
 
-	conn, _, err := websocket.DefaultDialer.Dial(s.wsUrl, http.Header{})
+func connectShard(session *Session, shard int) (*Shard, error) {
+	conn, _, err := websocket.DefaultDialer.Dial(session.wsUrl, http.Header{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	s.webSocket = conn
+	s := &Shard{webSocket: conn, stopListen: make(chan bool)}
+
+	helloFrame, err := s.readFrame()
+	if err != nil {
+		return nil, err
+	} else if helloFrame.Op != opHello {
+		return nil, errors.New("First frame sent from the Discord Gateway is not hello")
+	}
 
 	hello := helloPayload{}
-	helloFrame := gatewayFrame{opHello, &hello}
-	conn.ReadJSON(&helloFrame)
+	err = json.Unmarshal(helloFrame.Data, &hello)
+	if err != nil {
+		return nil, err
+	}
+
 	logger.Debugf("Connected to Discord servers: %s", strings.Join(hello.Servers, ", "))
 	logger.Debugf("Setting up a heartbeat interval of %d ms", hello.HeartbeatInterval)
-
 	s.heartbeat = hello.HeartbeatInterval
 	go s.listen()
 
 	conn.WriteJSON(gatewayFrame{opIdentify, identifyPayload{
-		Token:          s.token,
+		Token:          session.token,
 		Compress:       true,
 		LargeThreshold: 250,
-		Shard:          [2]int{0, 1},
+		Shard:          [2]int{shard, cap(session.shards)},
 		Properties: propertiesPayload{
 			OS:      runtime.GOOS,
 			Browser: "DisGo",
@@ -46,21 +60,17 @@ func (s *Session) Open() error {
 		},
 	}})
 
-	<-s.stopListen
-	return nil
+	return s, nil
 }
 
-func (s *Session) Close() {
-	s.checkValid()
-	logger.Trace("Close() called")
-
+func (s *Shard) disconnect() {
 	if s.webSocket != nil {
 		s.stopListen <- true
 		s.webSocket = nil
 	}
 }
 
-func (s *Session) listen() {
+func (s *Shard) listen() {
 	defer s.webSocket.Close()
 
 	s.stopListen = make(chan bool)
@@ -93,6 +103,12 @@ listenLoop:
 				sentHeartBeat = false
 			case opDispatch:
 				logger.Infof("Received event %s", message.EventName)
+				switch message.EventName {
+				case "READY":
+					event := ReadyEvent{}
+					json.Unmarshal(message.Data, &event)
+					logger.Infof("ReadyEvent: %+v for user: %s", event, event.User.Username())
+				}
 			default:
 				logger.Errorf("Invalid opCode received: %d", opCode)
 			}
@@ -102,20 +118,22 @@ listenLoop:
 	heartbeat.Stop()
 }
 
-func (s *Session) readWebSocket(reader chan *receivedFrame) {
+func (s *Shard) readWebSocket(reader chan *receivedFrame) {
 	for {
-		err := s.readMessage(reader)
+		frame, err := s.readFrame()
 		if err != nil {
 			s.stopListen <- true
 			break
 		}
+
+		reader <- frame
 	}
 }
 
-func (s *Session) readMessage(frameDst chan *receivedFrame) error {
+func (s *Shard) readFrame() (*receivedFrame, error) {
 	msgType, msg, err := s.webSocket.ReadMessage()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var reader io.Reader
@@ -124,7 +142,7 @@ func (s *Session) readMessage(frameDst chan *receivedFrame) error {
 	if msgType == websocket.BinaryMessage {
 		zReader, err := zlib.NewReader(reader)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		defer zReader.Close()
@@ -134,6 +152,15 @@ func (s *Session) readMessage(frameDst chan *receivedFrame) error {
 
 	frame := receivedFrame{}
 	json.NewDecoder(reader).Decode(&frame)
-	frameDst <- &frame
-	return nil
+
+	logger.Debugf("Received frame: %+v", struct {
+		Op        opCode
+		Sequence  int
+		EventName string
+	}{frame.Op, frame.Sequence, frame.EventName})
+
+	if frame.Sequence != 0 {
+		s.sequence = frame.Sequence
+	}
+	return &frame, nil
 }
