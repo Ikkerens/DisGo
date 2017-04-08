@@ -1,6 +1,6 @@
 package disgo
 
-import "encoding/json"
+//go:generate go run generate/apimodel/main.go
 
 type Snowflake uint64
 
@@ -15,22 +15,9 @@ type internalUser struct {
 	EMail         string    `json:"e_mail,omitempty"`
 }
 
-type User struct {
-	discordObject *internalUser
-}
-
-func (u *User) MarshalJSON() ([]byte, error) {
-	return json.Marshal(u.discordObject)
-}
-
-func (u *User) UnmarshalJSON(b []byte) error {
-	return json.Unmarshal(b, &u.discordObject)
-}
-
-func (u *User) ID() Snowflake {
-	return u.discordObject.ID
-}
-
-func (u *User) Username() string {
-	return u.discordObject.Username
+type internalDMChannel struct {
+	ID            Snowflake `json:"id"`
+	IsPrivate     bool      `json:"is_private"`
+	Recipient     *User     `json:"recipient"`
+	LastMessageID Snowflake `json:"last_message_id"`
 }

@@ -49,6 +49,7 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 	eventInstance := reflect.New(eventType).Interface()
 	zeroEvent := eventInstance.(Event)
 
+	// Wrap the event handler in a reflected function that "type asserts" the event
 	wrapper := func(session *Session, event Event) {
 		go handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(event).Elem().Convert(eventType)})
 	}
@@ -67,6 +68,8 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 	switch frame.EventName {
 	case "READY":
 		event = &ReadyEvent{}
+	case "RESUMED":
+		event = &ResumedEvent{}
 	default:
 		logger.Errorf("Event with name '%s' was dispatched by Discord, but we don't know this event. (DisGo outdated?)", frame.EventName)
 		return
