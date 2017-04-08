@@ -2,8 +2,6 @@ package disgo_test
 
 import (
 	"flag"
-	"os"
-	"os/signal"
 	"testing"
 
 	"github.com/ikkerens/disgo"
@@ -18,14 +16,9 @@ var (
 func init() {
 	flag.StringVar(&token, "token", "", "Token for the bot")
 	flag.Parse()
-
-	appQuit = make(chan bool)
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	go func() { <-signalChan; appQuit <- true }()
 }
 
-func TestBuilder(t *testing.T) {
+func TestMessageCreateDelete(t *testing.T) {
 	discord, err := disgo.LoginWithToken(disgo.TypeBot, token)
 	if err != nil {
 		logger.ErrorE(err)
@@ -33,7 +26,8 @@ func TestBuilder(t *testing.T) {
 		return
 	}
 
-	discord.RegisterEventHandler(onReady)
+	discord.RegisterEventHandler(onGuildCreate)
+	discord.RegisterEventHandler(onMessage)
 
 	err = discord.Connect()
 	if err != nil {
@@ -41,11 +35,25 @@ func TestBuilder(t *testing.T) {
 		t.FailNow()
 		return
 	}
+
 	defer discord.Close()
 
 	<-appQuit
 }
 
-func onReady(_ *disgo.Session, event disgo.ReadyEvent) {
-	logger.Infof("onReady was called, logged in as %s with ID %d!", event.User.Username(), event.User.ID())
+func onGuildCreate(s *disgo.Session, event disgo.GuildCreateEvent) {
+	for _, channel := range event.Channels() {
+		if channel.Type() == "text" && channel.Name() == "bottest" {
+			err := s.SendMessage(channel.ID(), "I am going to delete this message!")
+			if err != nil {
+				logger.ErrorE(err)
+			}
+		}
+	}
+}
+
+func onMessage(s *disgo.Session, event disgo.MessageCreateEvent) {
+	logger.Infof("User %s posted: %s", event.Author().Username(), event.Content())
+	s.DeleteMessage(event.ChannelID(), event.ID())
+	appQuit <- true
 }

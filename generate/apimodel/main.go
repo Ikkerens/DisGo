@@ -115,6 +115,7 @@ func main() {
 			}
 
 			func (s *{{.Exported}}) UnmarshalJSON(b []byte) error {
+				s.discordObject = &{{.Name}}{}
 				return json.Unmarshal(b, &s.discordObject)
 			}
 

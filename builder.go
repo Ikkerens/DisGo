@@ -22,7 +22,7 @@ func LoginWithToken(tokenType TokenType, token string) (*Session, error) {
 		return nil, errors.New("Configuration.Token cannot be empty")
 	}
 
-	session := &Session{valid: true, tokenType: tokenType, token: token}
+	session := &Session{tokenType: tokenType, token: token}
 
 	gateway := gatewayGetResponse{}
 	err := session.doHttpGet(EndPointBotGateway, &gateway)

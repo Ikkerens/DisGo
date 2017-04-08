@@ -70,6 +70,14 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 		event = &ReadyEvent{}
 	case "RESUMED":
 		event = &ResumedEvent{}
+	case "GUILD_CREATE":
+		event = &GuildCreateEvent{}
+	case "MESSAGE_CREATE":
+		event = &MessageCreateEvent{}
+	case "MESSAGE_DELETE":
+		event = &MessageDeleteEvent{}
+	case "TYPING_START":
+		event = &TypingStartEvent{}
 	default:
 		logger.Errorf("Event with name '%s' was dispatched by Discord, but we don't know this event. (DisGo outdated?)", frame.EventName)
 		return

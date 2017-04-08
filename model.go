@@ -2,89 +2,133 @@ package disgo
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 )
 
 //go:generate go run generate/apimodel/main.go
 
+/******************/
+/* Resources/Meta */
+/******************/
+
 type Snowflake uint64
 
-type internalUser struct {
-	ID            Snowflake `json:"id,string"`
-	Username      string    `json:"username"`
-	Discriminator string    `json:"discriminator"`
-	AvatarHash    string    `json:"avatar"`
-	Bot           bool      `json:"bot"`
-	MFAEnabled    bool      `json:"mfa_enabled"`
-	Verified      bool      `json:"verified,omitempty"`
-	EMail         string    `json:"e_mail,omitempty"`
+func (s Snowflake) String() string {
+	return strconv.FormatUint(uint64(s), 10)
 }
 
+func (s Snowflake) MarshalJSON() ([]byte, error) {
+	return json.Marshal(strconv.FormatUint(uint64(s), 10))
+}
+
+func (s *Snowflake) UnmarshalJSON(b []byte) error {
+	var (
+		tmp    string
+		result uint64
+		err    error
+	)
+	err = json.Unmarshal(b, &tmp)
+
+	if tmp == "" {
+		tmp = "0"
+	}
+
+	if err == nil {
+		result, err = strconv.ParseUint(tmp, 10, 64)
+	}
+
+	if err == nil {
+		*s = Snowflake(result)
+	}
+
+	return err
+}
+
+type UnixTimeStamp struct {
+	*time.Time
+}
+
+func (s UnixTimeStamp) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Unix())
+}
+
+func (s *UnixTimeStamp) UnmarshalJSON(b []byte) error {
+	var tmp int64
+	err := json.Unmarshal(b, &tmp)
+
+	if err == nil {
+		tim := time.Unix(tmp, 0)
+		*s = UnixTimeStamp{&tim}
+	}
+
+	return err
+}
+
+/*********************/
+/* Resources/Channel */
+/*********************/
+
 type internalChannel struct {
-	ID                   Snowflake   `json:"id,string"`
-	GuildID              Snowflake   `json:"guild_id,string"`
+	ID                   Snowflake   `json:"id"`
+	GuildID              Snowflake   `json:"guild_id"`
 	Name                 string      `json:"name"`
 	Type                 string      `json:"type"`
 	Position             int         `json:"position"`
 	IsPrivate            bool        `json:"is_private"`
 	PermissionOverwrites []Overwrite `json:"permission_overwrites"`
-	Topic                string      `json:"topic,omitempty"`
-	LastMessageID        Snowflake   `json:"last_message_id,string,omitempty"`
-	Bitrate              int         `json:"bitrate,omitempty"`
-	UserLimit            int         `json:"user_limit,omitempty"`
+	Topic                string      `json:"topic"`
+	LastMessageID        Snowflake   `json:"last_message_id,omitempty"`
+	Bitrate              int         `json:"bitrate"`
+	UserLimit            int         `json:"user_limit"`
 }
 
 type internalDMChannel struct {
-	ID            Snowflake `json:"id,string"`
+	ID            Snowflake `json:"id"`
 	IsPrivate     bool      `json:"is_private"`
 	Recipient     *User     `json:"recipient"`
-	LastMessageID Snowflake `json:"last_message_id,string"`
+	LastMessageID Snowflake `json:"last_message_id"`
 }
 
 type internalMessage struct {
-	ID              Snowflake         `json:"id,string"`
-	ChannelID       Snowflake         `json:"channel_id,string"`
-	Author          *User             `json:"author"`
-	Content         string            `json:"content"`
-	Timestamp       time.Time         `json:"timestamp,string"`
-	EditedTimestamp time.Time         `json:"edited_timestamp,string,omitempty"`
-	TTS             bool              `json:"tts"`
-	MentionEveryone bool              `json:"mention_everyone"`
-	MentionRoles    []json.RawMessage `json:"mention_roles"`
-	Attachments     []Attachment      `json:"attachments"`
-	Embeds          []Embed           `json:"embeds"`
-	Reactions       []Reaction        `json:"reactions"`
-	NOnce           Snowflake         `json:"nonce,string,omitempty"`
-	Pinned          bool              `json:"pinned"`
-	WebhookID       string            `json:"webhook_id"`
+	ID              Snowflake    `json:"id"`
+	ChannelID       Snowflake    `json:"channel_id"`
+	Author          *User        `json:"author"`
+	Content         string       `json:"content"`
+	Timestamp       time.Time    `json:"timestamp,string,omitempty"`
+	EditedTimestamp time.Time    `json:"edited_timestamp,string,omitempty"`
+	TTS             bool         `json:"tts"`
+	MentionEveryone bool         `json:"mention_everyone"`
+	MentionRoles    []*Role      `json:"mention_roles"`
+	Attachments     []Attachment `json:"attachments"`
+	Embeds          []Embed      `json:"embeds"`
+	Reactions       []Reaction   `json:"reactions"`
+	NOnce           Snowflake    `json:"nonce"`
+	Pinned          bool         `json:"pinned"`
+	WebhookID       string       `json:"webhook_id"`
 }
 
 type internalReaction struct {
-	Count int   `json:"count"`
-	Me    bool  `json:"me"`
-	Emoji Emoji `json:"emoji"`
-}
-
-type internalEmoji struct {
-	ID   Snowflake `json:"id,string,omitempty"`
-	Name string    `json:"name"`
+	Count int    `json:"count"`
+	Me    bool   `json:"me"`
+	Emoji *Emoji `json:"emoji"`
 }
 
 type internalOverwrite struct {
-	ID    Snowflake `json:"id,string"`
+	ID    Snowflake `json:"id"`
 	Type  string    `json:"type"`
 	Allow int       `json:"allow"`
 	Deny  int       `json:"deny"`
 }
 
 type internalAttachment struct {
-	ID       Snowflake `json:"id,string"`
+	ID       Snowflake `json:"id"`
 	Filename string    `json:"filename"`
 	Size     int       `json:"size"`
 	URL      string    `json:"url"`
 	ProxyURL string    `json:"proxy_url"`
-	Height   int       `json:"height,omitempty"`
-	Width    int       `json:"width,omitempty"`
+	Height   int       `json:"height"`
+	Width    int       `json:"width"`
 }
 
 type Embed struct {
@@ -145,4 +189,78 @@ type EmbedField struct {
 	Name   string `json:"name"`
 	Value  string `json:"value"`
 	Inline bool   `json:"inline"`
+}
+
+/*******************/
+/* Resources/Guild */
+/*******************/
+
+type internalGuild struct {
+	ID                          Snowflake         `json:"id"`
+	Name                        string            `json:"name"`
+	IconHash                    string            `json:"icon"`
+	SplashHash                  string            `json:"splash"`
+	OwnerID                     Snowflake         `json:"owner_id"`
+	Region                      string            `json:"region"`
+	AFKChannelID                Snowflake         `json:"afk_channel_id"`
+	AFKTimeout                  int               `json:"afk_timeout"`
+	EmbedEnabled                bool              `json:"embed_enabled"`
+	EmbedChannelID              Snowflake         `json:"embed_channel_id"`
+	VerificationLevel           int               `json:"verification_level"`
+	DefaultMessageNotifications int               `json:"default_message_notifications"`
+	Roles                       []*Role           `json:"roles"`
+	Emojis                      []*Emoji          `json:"emojis"`
+	Features                    []json.RawMessage `json:"features"`
+	MFALevel                    int               `json:"mfa_level"`
+	JoinedAt                    time.Time         `json:"joined_at,string"`
+	Large                       bool              `json:"large"`
+	Unavailable                 bool              `json:"unavailable"`
+	MemberCount                 int               `json:"member_count"`
+	VoiceStates                 []json.RawMessage `json:"voice_states"`
+	Members                     []GuildMember     `json:"members"`
+	Channels                    []*Channel        `json:"channels"`
+	Presences                   []json.RawMessage `json:"presences"`
+}
+
+type internalGuildMember struct {
+	User     *User       `json:"user"`
+	Nick     string      `json:"nick,omitempty"`
+	Roles    []Snowflake `json:"roles"`
+	JoinedAt time.Time   `json:"joined_at"`
+	Deaf     bool        `json:"deaf"`
+	Mute     bool        `json:"mute"`
+}
+
+type internalEmoji struct {
+	ID            Snowflake         `json:"id,omitempty"`
+	Name          string            `json:"name"`
+	Roles         []json.RawMessage `json:"roles"`
+	RequireColons bool              `json:"require_colons"`
+	Managed       bool              `json:"managed"`
+}
+
+/******************/
+/* Resources/User */
+/******************/
+
+type internalUser struct {
+	ID            Snowflake `json:"id"`
+	Username      string    `json:"username"`
+	Discriminator string    `json:"discriminator"`
+	AvatarHash    string    `json:"avatar"`
+	Bot           bool      `json:"bot"`
+	MFAEnabled    bool      `json:"mfa_enabled"`
+	Verified      bool      `json:"verified,omitempty"`
+	EMail         string    `json:"e_mail,omitempty"`
+}
+
+type internalRole struct {
+	ID          Snowflake `json:"id,omitempty"`
+	Name        string    `json:"name"`
+	Color       int       `json:"color"`
+	Hoist       bool      `json:"hoist"`
+	Position    int       `json:"position"`
+	Permissions int       `json:"permissions"`
+	Managed     bool      `json:"managed"`
+	Mentionable bool      `json:"mentionable"`
 }
