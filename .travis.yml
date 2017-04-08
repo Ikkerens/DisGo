@@ -4,7 +4,7 @@ go:
   - 1.8
 install:
   - go get -d -t -v ./...
-before-script:
+before_script:
   - go generate
 script:
   - go install
