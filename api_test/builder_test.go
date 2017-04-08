@@ -16,6 +16,8 @@ var (
 func init() {
 	flag.StringVar(&token, "token", "", "Token for the bot")
 	flag.Parse()
+
+	appQuit = make(chan bool)
 }
 
 func TestMessageCreateDelete(t *testing.T) {

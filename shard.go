@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -25,6 +26,7 @@ type Shard struct {
 	sequence  int
 	heartbeat int
 
+	mutex        sync.Mutex
 	closeMessage chan int
 	stopListen   chan bool
 	stopRead     chan bool
@@ -140,7 +142,7 @@ func (s *Shard) mainLoop() {
 	defer heartbeat.Stop()
 	sentHeartBeat := false
 
-	reader := make(chan *receivedFrame)
+	reader := make(chan *receivedFrame, 1)
 	go s.readWebSocket(reader)
 
 	for {
@@ -181,6 +183,8 @@ func (s *Shard) readWebSocket(reader chan *receivedFrame) {
 	defer logger.Debugf("Exiting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 
 	for {
+		s.mutex.Lock()
+		s.mutex.Unlock()
 		select {
 		case <-s.stopRead:
 			return
@@ -234,6 +238,8 @@ func (s *Shard) readFrame() (*receivedFrame, error) {
 
 func (s *Shard) reconnect() {
 	if !s.session.shuttingDown {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
 		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
 
@@ -258,6 +264,7 @@ func (s *Shard) onClose(code int, text string) error {
 }
 
 func (s *Shard) disconnect(code int, text string) {
+	s.mutex.Lock()
 	s.stopListen <- true
 
 	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
@@ -273,6 +280,7 @@ func (s *Shard) disconnect(code int, text string) {
 	}
 
 	s.webSocket.Close()
+	s.mutex.Unlock()
 	s.stopRead <- true
 
 	s.reconnect()

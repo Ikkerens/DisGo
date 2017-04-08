@@ -88,7 +88,7 @@ func (s *Session) doHttpPost(url string, body interface{}) (err error) {
 
 func (s *Session) doRequest(method, url string, body io.Reader) (response *http.Response, err error) {
 	path := strings.Replace(url, BaseUrl, "", 1)
-	logger.Tracef("%s:%s called", method, path)
+	logger.Debugf("HTTP %s %s", method, path)
 
 	var (
 		req    *http.Request

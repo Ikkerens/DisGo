@@ -15,6 +15,11 @@ func (s *Session) SendMessage(channelID Snowflake, content string) (err error) {
 	return
 }
 
+func (s *Session) SendEmbed(channelID Snowflake, embed Embed) (err error) {
+	err = s.doHttpPost(EndPointMessages(channelID), createMessage{Content: "", Embed: embed})
+	return
+}
+
 func (s *Session) DeleteMessage(channelID, messageID Snowflake) (err error) {
 	err = s.doHttpDelete(EndPointMessage(channelID, messageID))
 	return
