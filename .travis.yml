@@ -2,5 +2,9 @@ language: go
 sudo: false
 go:
   - 1.8
-before-install:
+install:
+  - go get -d -t -v ./...
+before-script:
   - go generate
+script:
+  - go install
