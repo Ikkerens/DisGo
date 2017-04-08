@@ -13,6 +13,7 @@ import (
 
 	"github.com/slf4go/logger"
 	"os"
+	"sort"
 )
 
 type internalField struct {
@@ -93,6 +94,10 @@ func main() {
 			}
 		}
 	}
+
+	sort.SliceStable(types, func(i, j int) bool {
+		return types[i].Name < types[j].Name
+	})
 
 	logger.Infof("Generating GO file")
 	var tpl = template.Must(template.New("apimodel").Parse(`package disgo
