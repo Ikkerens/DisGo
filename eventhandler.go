@@ -69,23 +69,9 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 }
 
 func (s *Session) dispatchEvent(frame *receivedFrame) {
-	var event Event
+	event := allocateEvent(frame.EventName)
 
-	switch frame.EventName {
-	case "READY":
-		event = &ReadyEvent{}
-	case "RESUMED":
-		event = &ResumedEvent{}
-	case "GUILD_CREATE":
-		event = &GuildCreateEvent{}
-	case "MESSAGE_CREATE":
-		event = &MessageCreateEvent{}
-	case "MESSAGE_DELETE":
-		event = &MessageDeleteEvent{}
-	case "TYPING_START":
-		event = &TypingStartEvent{}
-	default:
-		logger.Errorf("Event with name '%s' was dispatched by Discord, but we don't know this event. (DisGo outdated?)", frame.EventName)
+	if event == nil {
 		return
 	}
 
@@ -95,12 +81,13 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 		return
 	}
 
-	event.setSession(s)
+	(*event).setSession(s)
 
-	handlerSlice, exists := handlers[event.eventName()]
+	logger.Debugf("Dispatching event %s to handlers", (*event).eventName())
+	handlerSlice, exists := handlers[(*event).eventName()]
 	if exists {
 		for _, handler := range handlerSlice {
-			handler(s, &event)
+			handler(s, event)
 		}
 	}
 }

@@ -188,6 +188,10 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 			frame, err := s.readFrame()
 			if err != nil {
 				if !s.session.shuttingDown {
+					if closeErr, isClose := err.(*websocket.CloseError); isClose {
+						s.closeMessage <- closeErr.Code
+					}
+					logger.ErrorE(err)
 					go s.disconnect(websocket.CloseAbnormalClosure, err.Error())
 				}
 				<-s.stopRead // Wait for the connection to be closed
