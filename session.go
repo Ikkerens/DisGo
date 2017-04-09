@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/slf4go/logger"
-	"io/ioutil"
 )
 
 type Session struct {
@@ -19,8 +19,10 @@ type Session struct {
 	tokenType TokenType
 	wsUrl     string
 
-	shards       []*Shard
+	shards       []*shard
 	shuttingDown bool
+
+	objects map[Snowflake]interface{}
 }
 
 func (s *Session) Connect() error {
@@ -39,19 +41,6 @@ func (s *Session) Connect() error {
 	}
 
 	return nil
-}
-
-func (s *Session) Close() {
-	s.shuttingDown = true
-	s.closeShards(websocket.CloseNormalClosure, "")
-}
-
-func (s *Session) closeShards(code int, text string) {
-	for _, sh := range s.shards {
-		if sh != nil {
-			sh.disconnect(code, text)
-		}
-	}
 }
 
 func (s *Session) authorizationHeader() string {
@@ -119,4 +108,17 @@ func (s *Session) doRequest(method, url string, body io.Reader) (response *http.
 	}
 
 	return response, nil
+}
+
+func (s *Session) Close() {
+	s.shuttingDown = true
+	s.closeShards(websocket.CloseNormalClosure, "")
+}
+
+func (s *Session) closeShards(code int, text string) {
+	for _, sh := range s.shards {
+		if sh != nil {
+			sh.disconnect(code, text)
+		}
+	}
 }

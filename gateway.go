@@ -46,7 +46,7 @@ type identifyPayload struct {
 	Properties     propertiesPayload `json:"properties"`
 	Compress       bool              `json:"compress"`
 	LargeThreshold int               `json:"large_threshold"`
-	Shard          [2]int            `json:"Shard"`
+	Shard          [2]int            `json:"shard"`
 }
 
 type propertiesPayload struct {

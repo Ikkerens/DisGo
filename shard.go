@@ -10,14 +10,13 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/slf4go/logger"
 )
 
-type Shard struct {
+type shard struct {
 	session *Session
 
 	webSocket *websocket.Conn
@@ -26,22 +25,21 @@ type Shard struct {
 	sequence  int
 	heartbeat int
 
-	mutex        sync.Mutex
 	closeMessage chan int
 	stopListen   chan bool
 	stopRead     chan bool
 }
 
-func connectShard(session *Session, shard int) (*Shard, error) {
+func connectShard(session *Session, shardNum int) (*shard, error) {
 	conn, _, err := websocket.DefaultDialer.Dial(session.wsUrl, http.Header{})
 	if err != nil {
 		return nil, err
 	}
 
-	s := &Shard{
+	s := &shard{
 		session:      session,
 		webSocket:    conn,
-		shard:        shard,
+		shard:        shardNum,
 		closeMessage: make(chan int, 1),
 		stopListen:   make(chan bool),
 		stopRead:     make(chan bool),
@@ -54,7 +52,7 @@ func connectShard(session *Session, shard int) (*Shard, error) {
 	return s, nil
 }
 
-func (s *Shard) handshake() error {
+func (s *shard) handshake() error {
 	s.webSocket.SetCloseHandler(s.onClose)
 
 	helloFrame, err := s.readFrame()
@@ -81,7 +79,7 @@ func (s *Shard) handshake() error {
 	return nil
 }
 
-func (s *Shard) identify() error {
+func (s *shard) identify() error {
 	if s.sessionID != "" {
 		logger.Debugf("Resuming connectiong starting at sequence %d.", s.sequence)
 		s.sendFrame(&gatewayFrame{opResume, resumePayload{
@@ -134,7 +132,7 @@ func (s *Shard) identify() error {
 	}
 }
 
-func (s *Shard) mainLoop() {
+func (s *shard) mainLoop() {
 	logger.Debugf("Starting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 
@@ -157,7 +155,7 @@ func (s *Shard) mainLoop() {
 		case <-s.stopListen:
 			return
 		case frame := <-reader:
-			switch opCode := frame.Op; opCode {
+			switch frame.Op {
 			case opHeartbeat:
 				s.sendFrame(&gatewayFrame{Op: opHeartbeatAck})
 			case opHeartbeatAck:
@@ -167,24 +165,22 @@ func (s *Shard) mainLoop() {
 			case opDispatch:
 				s.session.dispatchEvent(frame)
 			default:
-				logger.Errorf("Unknown opCode received: %d", opCode)
+				logger.Errorf("Unknown opCode received: %d", frame.Op)
 			}
 		}
 	}
 }
 
-func (s *Shard) sendFrame(frame *gatewayFrame) {
+func (s *shard) sendFrame(frame *gatewayFrame) {
 	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
 }
 
-func (s *Shard) readWebSocket(reader chan *receivedFrame) {
+func (s *shard) readWebSocket(reader chan *receivedFrame) {
 	logger.Debugf("Starting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 
 	for {
-		s.mutex.Lock()
-		s.mutex.Unlock()
 		select {
 		case <-s.stopRead:
 			return
@@ -204,7 +200,7 @@ func (s *Shard) readWebSocket(reader chan *receivedFrame) {
 
 }
 
-func (s *Shard) readFrame() (*receivedFrame, error) {
+func (s *shard) readFrame() (*receivedFrame, error) {
 	msgType, msg, err := s.webSocket.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -236,10 +232,8 @@ func (s *Shard) readFrame() (*receivedFrame, error) {
 	return &frame, nil
 }
 
-func (s *Shard) reconnect() {
+func (s *shard) reconnect() {
 	if !s.session.shuttingDown {
-		s.mutex.Lock()
-		defer s.mutex.Unlock()
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
 		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
 
@@ -256,15 +250,14 @@ func (s *Shard) reconnect() {
 	}
 }
 
-func (s *Shard) onClose(code int, text string) error {
+func (s *shard) onClose(code int, text string) error {
 	logger.Infof("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 	s.closeMessage <- code
 	s.reconnect()
 	return nil
 }
 
-func (s *Shard) disconnect(code int, text string) {
-	s.mutex.Lock()
+func (s *shard) disconnect(code int, text string) {
 	s.stopListen <- true
 
 	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
@@ -280,7 +273,6 @@ func (s *Shard) disconnect(code int, text string) {
 	}
 
 	s.webSocket.Close()
-	s.mutex.Unlock()
 	s.stopRead <- true
 
 	s.reconnect()

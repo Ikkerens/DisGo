@@ -7,7 +7,13 @@ import (
 	"github.com/slf4go/logger"
 )
 
-type eventHandler func(session *Session, event Event)
+type Event interface {
+	eventName() string
+
+	setSession(*Session)
+}
+
+type eventHandler func(session *Session, event *Event)
 
 var (
 	eventInterface reflect.Type
@@ -15,7 +21,7 @@ var (
 )
 
 func init() {
-	eventInterface = reflect.TypeOf((*Event)(nil)).Elem()
+	eventInterface = reflect.TypeOf((*Event)(nil))
 	handlers = make(map[string][]eventHandler)
 }
 
@@ -41,24 +47,24 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 
 	// Is the second argument a struct that implements Event so we can obtain the Event Name?
 	eventType := handlerType.In(1)
-	if !eventType.Implements(eventInterface) {
-		panic("The second argument of the passed Func should be a known zeroEvent pointer.")
+	if eventType.ConvertibleTo(eventInterface) {
+		panic("The second argument of the passed Func should be a known Event.")
 	}
 
-	// Create a zero'd instance of the particular Event, so that we can call EventName() on it
+	// Create a zero'd instance of the particular Event, so that we can call eventName() on it
 	eventInstance := reflect.New(eventType).Interface()
 	zeroEvent := eventInstance.(Event)
 
 	// Wrap the event handler in a reflected function that "type asserts" the event
-	wrapper := func(session *Session, event Event) {
-		go handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(event).Elem().Convert(eventType)})
+	wrapper := func(session *Session, event *Event) {
+		go handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(*event).Elem().Convert(eventType)})
 	}
 
-	list, exists := handlers[zeroEvent.EventName()]
+	list, exists := handlers[zeroEvent.eventName()]
 	if !exists {
-		handlers[zeroEvent.EventName()] = []eventHandler{wrapper}
+		handlers[zeroEvent.eventName()] = []eventHandler{wrapper}
 	} else {
-		handlers[zeroEvent.EventName()] = append(list, wrapper)
+		handlers[zeroEvent.eventName()] = append(list, wrapper)
 	}
 }
 
@@ -89,10 +95,12 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 		return
 	}
 
-	handlerSlice, exists := handlers[event.EventName()]
+	event.setSession(s)
+
+	handlerSlice, exists := handlers[event.eventName()]
 	if exists {
 		for _, handler := range handlerSlice {
-			handler(s, event)
+			handler(s, &event)
 		}
 	}
 }

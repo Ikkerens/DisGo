@@ -8,12 +8,12 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"html/template"
 	"io/ioutil"
-
-	"github.com/slf4go/logger"
 	"os"
 	"sort"
+	"text/template"
+
+	"github.com/slf4go/logger"
 )
 
 type internalField struct {
@@ -26,35 +26,6 @@ type internalType struct {
 	Name     string
 	Exported string
 	Fields   []internalField
-}
-
-func determineType(field ast.Expr) (typeStr string, err error) {
-	switch v := field.(type) {
-	case *ast.Ident:
-		typeStr = v.Name
-	case *ast.StarExpr:
-		subType, err := determineType(v.X)
-		if err != nil {
-			return "", err
-		}
-		typeStr = "*" + subType
-	case *ast.SelectorExpr:
-		subType, err := determineType(v.X)
-		if err != nil {
-			return "", err
-		}
-		typeStr = subType + "." + v.Sel.Name
-	case *ast.ArrayType:
-		subType, err := determineType(v.Elt)
-		if err != nil {
-			return "", err
-		}
-		typeStr = "[]" + subType
-	default:
-		err = errors.New(fmt.Sprintf("Unknown field type (%T): %+v", v, v))
-	}
-
-	return
 }
 
 func main() {
@@ -148,5 +119,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	ioutil.WriteFile("apimodel.go", result, 0644)
+	ioutil.WriteFile("model_generated.go", result, 0644)
+}
+
+func determineType(field ast.Expr) (typeStr string, err error) {
+	switch v := field.(type) {
+	case *ast.Ident:
+		typeStr = v.Name
+	case *ast.StarExpr:
+		subType, err := determineType(v.X)
+		if err != nil {
+			return "", err
+		}
+		typeStr = "*" + subType
+	case *ast.SelectorExpr:
+		subType, err := determineType(v.X)
+		if err != nil {
+			return "", err
+		}
+		typeStr = subType + "." + v.Sel.Name
+	case *ast.ArrayType:
+		subType, err := determineType(v.Elt)
+		if err != nil {
+			return "", err
+		}
+		typeStr = "[]" + subType
+	default:
+		err = errors.New(fmt.Sprintf("Unknown field type (%T): %+v", v, v))
+	}
+
+	return
 }
