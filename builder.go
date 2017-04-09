@@ -22,10 +22,7 @@ func LoginWithToken(tokenType TokenType, token string) (*Session, error) {
 		return nil, errors.New("Configuration.Token cannot be empty")
 	}
 
-	session := &Session{tokenType: tokenType, token: token, state: &state{
-		guilds: make(map[Snowflake]*Guild),
-		users:  make(map[Snowflake]*User),
-	}}
+	session := &Session{tokenType: tokenType, token: token, objects: make(map[Snowflake]interface{})}
 
 	gateway := gatewayGetResponse{}
 	err := session.doHttpGet(EndPointBotGateway, &gateway)
