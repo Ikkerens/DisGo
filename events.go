@@ -15,6 +15,10 @@ type ResumedEvent struct {
 	Servers []string `json:"_trace"`
 }
 
+type PresenceUpdateEvent struct {
+	*Presence
+}
+
 type GuildCreateEvent struct {
 	*Guild
 }

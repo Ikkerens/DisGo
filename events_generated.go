@@ -18,6 +18,8 @@ func allocateEvent(eventName string) *Event {
 		event = &MessageCreateEvent{}
 	case "MESSAGE_DELETE":
 		event = &MessageDeleteEvent{}
+	case "PRESENCE_UPDATE":
+		event = &PresenceUpdateEvent{}
 	case "READY":
 		event = &ReadyEvent{}
 	case "RESUMED":
@@ -71,6 +73,22 @@ func (*MessageDeleteEvent) eventName() string {
 }
 
 func (e *MessageDeleteEvent) setSession(s *Session) {
+}
+
+func (*PresenceUpdateEvent) eventName() string {
+	return "PRESENCE_UPDATE"
+}
+
+func (e *PresenceUpdateEvent) setSession(s *Session) {
+}
+
+func (e *PresenceUpdateEvent) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.Presence)
+}
+
+func (e *PresenceUpdateEvent) UnmarshalJSON(b []byte) error {
+	e.Presence = &Presence{}
+	return json.Unmarshal(b, &e.Presence)
 }
 
 func (*ReadyEvent) eventName() string {

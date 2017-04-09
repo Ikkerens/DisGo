@@ -172,6 +172,32 @@ func (s *Emoji) Managed() bool {
 	return s.discordObject.Managed
 }
 
+type Game struct {
+	session       *Session `json:"-"`
+	discordObject *internalGame
+}
+
+func (s *Game) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.discordObject)
+}
+
+func (s *Game) UnmarshalJSON(b []byte) error {
+	s.discordObject = &internalGame{}
+	return json.Unmarshal(b, &s.discordObject)
+}
+
+func (s *Game) Name() string {
+	return s.discordObject.Name
+}
+
+func (s *Game) Type() int {
+	return s.discordObject.Type
+}
+
+func (s *Game) URL() string {
+	return s.discordObject.URL
+}
+
 type Guild struct {
 	session       *Session `json:"-"`
 	discordObject *internalGuild
@@ -422,6 +448,40 @@ func (s *Overwrite) Allow() int {
 
 func (s *Overwrite) Deny() int {
 	return s.discordObject.Deny
+}
+
+type Presence struct {
+	session       *Session `json:"-"`
+	discordObject *internalPresence
+}
+
+func (s *Presence) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.discordObject)
+}
+
+func (s *Presence) UnmarshalJSON(b []byte) error {
+	s.discordObject = &internalPresence{}
+	return json.Unmarshal(b, &s.discordObject)
+}
+
+func (s *Presence) User() *User {
+	return s.discordObject.User
+}
+
+func (s *Presence) Roles() []Snowflake {
+	return s.discordObject.Roles
+}
+
+func (s *Presence) Game() Game {
+	return s.discordObject.Game
+}
+
+func (s *Presence) GuildID() Snowflake {
+	return s.discordObject.GuildID
+}
+
+func (s *Presence) Status() string {
+	return s.discordObject.Status
 }
 
 type Reaction struct {

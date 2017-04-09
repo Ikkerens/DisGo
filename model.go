@@ -219,7 +219,7 @@ type internalGuild struct {
 	VoiceStates                 []json.RawMessage `json:"voice_states"`
 	Members                     []GuildMember     `json:"members"`
 	Channels                    []*Channel        `json:"channels"`
-	Presences                   []json.RawMessage `json:"presences"`
+	Presences                   []Presence        `json:"presences"`
 }
 
 type internalGuildMember struct {
@@ -263,4 +263,18 @@ type internalRole struct {
 	Permissions int       `json:"permissions"`
 	Managed     bool      `json:"managed"`
 	Mentionable bool      `json:"mentionable"`
+}
+
+type internalPresence struct {
+	User    *User       `json:"user"`
+	Roles   []Snowflake `json:"roles"`
+	Game    Game        `json:"game,omitempty"`
+	GuildID Snowflake   `json:"guild_id"`
+	Status  string      `json:"status"`
+}
+
+type internalGame struct {
+	Name string `json:"name"`
+	Type int    `json:"type"`
+	URL  string `json:"url,omitempty"`
 }
