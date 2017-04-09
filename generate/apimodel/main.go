@@ -83,7 +83,7 @@ func main() {
 
 		{{range .}}
 			type {{.Exported}} struct {
-				session *Session
+				session *Session ` + "`json:\"-\"`" + `
 				discordObject *{{.Name}}
 			}
 

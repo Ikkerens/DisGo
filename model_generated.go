@@ -9,7 +9,7 @@ import (
 )
 
 type Attachment struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalAttachment
 }
 
@@ -51,7 +51,7 @@ func (s *Attachment) Width() int {
 }
 
 type Channel struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalChannel
 }
 
@@ -109,7 +109,7 @@ func (s *Channel) UserLimit() int {
 }
 
 type DMChannel struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalDMChannel
 }
 
@@ -139,7 +139,7 @@ func (s *DMChannel) LastMessageID() Snowflake {
 }
 
 type Emoji struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalEmoji
 }
 
@@ -173,7 +173,7 @@ func (s *Emoji) Managed() bool {
 }
 
 type Guild struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalGuild
 }
 
@@ -283,7 +283,7 @@ func (s *Guild) Presences() []json.RawMessage {
 }
 
 type GuildMember struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalGuildMember
 }
 
@@ -321,7 +321,7 @@ func (s *GuildMember) Mute() bool {
 }
 
 type Message struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalMessage
 }
 
@@ -395,7 +395,7 @@ func (s *Message) WebhookID() string {
 }
 
 type Overwrite struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalOverwrite
 }
 
@@ -425,7 +425,7 @@ func (s *Overwrite) Deny() int {
 }
 
 type Reaction struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalReaction
 }
 
@@ -451,7 +451,7 @@ func (s *Reaction) Emoji() *Emoji {
 }
 
 type Role struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalRole
 }
 
@@ -497,7 +497,7 @@ func (s *Role) Mentionable() bool {
 }
 
 type User struct {
-	session       *Session
+	session       *Session `json:"-"`
 	discordObject *internalUser
 }
 
