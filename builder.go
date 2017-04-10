@@ -25,7 +25,7 @@ func LoginWithToken(tokenType TokenType, token string) (*Session, error) {
 	session := &Session{tokenType: tokenType, token: token, objects: make(map[Snowflake]interface{})}
 
 	gateway := gatewayGetResponse{}
-	err := session.doHttpGet(EndPointBotGateway, &gateway)
+	err := session.doRequest("GET", EndPointBotGateway()(false), nil, &gateway)
 	if err != nil {
 		return nil, err
 	}
