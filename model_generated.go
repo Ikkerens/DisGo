@@ -304,7 +304,7 @@ func (s *Guild) Channels() []*Channel {
 	return s.discordObject.Channels
 }
 
-func (s *Guild) Presences() []json.RawMessage {
+func (s *Guild) Presences() []Presence {
 	return s.discordObject.Presences
 }
 
