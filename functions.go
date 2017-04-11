@@ -25,7 +25,9 @@ func (s *Session) SendEmbed(channelID Snowflake, embed Embed) (message *Message,
 }
 
 func (s *Session) DeleteMessage(channelID, messageID Snowflake) error {
-	return s.doHttpDelete(EndPointMessage(channelID, messageID), nil)
+	endPoint := EndPointMessage(channelID, messageID)
+	endPoint.Bucket += "DELETE" // Deleting messages works with a separate ratelimit to allow better moderation
+	return s.doHttpDelete(endPoint, nil)
 }
 
 func (s *Message) Delete() error {
