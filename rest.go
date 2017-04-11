@@ -14,12 +14,12 @@ import (
 )
 
 func (s *Session) doHttpGet(endPoint EndPoint, target interface{}) (err error) {
-	err = s.doRequest("GET", endPoint(false), nil, target)
+	err = s.doRequest("GET", endPoint.URL, nil, target)
 	return err
 }
 
 func (s *Session) doHttpDelete(endPoint EndPoint, target interface{}) error {
-	err := s.doRequest("DELETE", endPoint(false), nil, target)
+	err := s.doRequest("DELETE", endPoint.URL, nil, target)
 	return err
 }
 
@@ -28,7 +28,7 @@ func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err e
 
 	if err == nil {
 		byteBuf := bytes.NewReader(jsonBody)
-		err = s.doRequest("POST", endPoint(false), byteBuf, target)
+		err = s.doRequest("POST", endPoint.URL, byteBuf, target)
 	}
 
 	return err

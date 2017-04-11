@@ -6,7 +6,10 @@ import (
 	"unicode/utf8"
 )
 
-type EndPoint func(bucket bool) string
+type EndPoint struct {
+	URL    string
+	Bucket string
+}
 
 var (
 	BaseUrl = "https://discordapp.com/api"
@@ -64,12 +67,6 @@ func makeEndPoint(path string) func(ids ...Snowflake) EndPoint {
 		}
 
 		// But only the rest api functions themselves should decide whether they need the bucket ID or the url
-		return func(bucket bool) string {
-			if bucket {
-				return fmt.Sprintf(bucketID, bucketIDs...)
-			} else {
-				return fmt.Sprintf(endPoint, endPointIDs...)
-			}
-		}
+		return EndPoint{fmt.Sprintf(endPoint, endPointIDs...), fmt.Sprintf(bucketID, bucketIDs...)}
 	}
 }
