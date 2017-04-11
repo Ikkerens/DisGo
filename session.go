@@ -30,7 +30,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 	session := &Session{tokenType: "Bot", token: token, objects: make(map[Snowflake]interface{})}
 
 	gateway := gatewayGetResponse{}
-	err := session.doRequest("GET", EndPointBotGateway().URL, nil, &gateway)
+	_, err := session.doRequest("GET", EndPointBotGateway().URL, nil, &gateway)
 	if err != nil {
 		return nil, err
 	}

@@ -83,22 +83,22 @@ func main() {
 
 		{{range .}}
 			type {{.Exported}} struct {
-				session *Session ` + "`json:\"-\"`" + `
-				discordObject *{{.Name}}
+				session *Session
+				internal *{{.Name}}
 			}
 
 			func (s *{{.Exported}}) MarshalJSON() ([]byte, error) {
-				return json.Marshal(s.discordObject)
+				return json.Marshal(s.internal)
 			}
 
 			func (s *{{.Exported}}) UnmarshalJSON(b []byte) error {
-				s.discordObject = &{{.Name}}{}
-				return json.Unmarshal(b, &s.discordObject)
+				s.internal = &{{.Name}}{}
+				return json.Unmarshal(b, &s.internal)
 			}
 
 			{{range .Fields}}
 				func (s *{{.Parent.Exported}}) {{.Name}}() {{.TypeStr}} {
-					return s.discordObject.{{.Name}}
+					return s.internal.{{.Name}}
 				}
 			{{end}}
 		{{end}}

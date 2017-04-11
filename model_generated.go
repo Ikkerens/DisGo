@@ -9,595 +9,595 @@ import (
 )
 
 type Attachment struct {
-	session       *Session `json:"-"`
-	discordObject *internalAttachment
+	session  *Session
+	internal *internalAttachment
 }
 
 func (s *Attachment) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Attachment) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalAttachment{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalAttachment{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Attachment) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Attachment) Filename() string {
-	return s.discordObject.Filename
+	return s.internal.Filename
 }
 
 func (s *Attachment) Size() int {
-	return s.discordObject.Size
+	return s.internal.Size
 }
 
 func (s *Attachment) URL() string {
-	return s.discordObject.URL
+	return s.internal.URL
 }
 
 func (s *Attachment) ProxyURL() string {
-	return s.discordObject.ProxyURL
+	return s.internal.ProxyURL
 }
 
 func (s *Attachment) Height() int {
-	return s.discordObject.Height
+	return s.internal.Height
 }
 
 func (s *Attachment) Width() int {
-	return s.discordObject.Width
+	return s.internal.Width
 }
 
 type Channel struct {
-	session       *Session `json:"-"`
-	discordObject *internalChannel
+	session  *Session
+	internal *internalChannel
 }
 
 func (s *Channel) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Channel) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalChannel{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalChannel{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Channel) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Channel) GuildID() Snowflake {
-	return s.discordObject.GuildID
+	return s.internal.GuildID
 }
 
 func (s *Channel) Name() string {
-	return s.discordObject.Name
+	return s.internal.Name
 }
 
 func (s *Channel) Type() string {
-	return s.discordObject.Type
+	return s.internal.Type
 }
 
 func (s *Channel) Position() int {
-	return s.discordObject.Position
+	return s.internal.Position
 }
 
 func (s *Channel) IsPrivate() bool {
-	return s.discordObject.IsPrivate
+	return s.internal.IsPrivate
 }
 
 func (s *Channel) PermissionOverwrites() []Overwrite {
-	return s.discordObject.PermissionOverwrites
+	return s.internal.PermissionOverwrites
 }
 
 func (s *Channel) Topic() string {
-	return s.discordObject.Topic
+	return s.internal.Topic
 }
 
 func (s *Channel) LastMessageID() Snowflake {
-	return s.discordObject.LastMessageID
+	return s.internal.LastMessageID
 }
 
 func (s *Channel) Bitrate() int {
-	return s.discordObject.Bitrate
+	return s.internal.Bitrate
 }
 
 func (s *Channel) UserLimit() int {
-	return s.discordObject.UserLimit
+	return s.internal.UserLimit
 }
 
 type DMChannel struct {
-	session       *Session `json:"-"`
-	discordObject *internalDMChannel
+	session  *Session
+	internal *internalDMChannel
 }
 
 func (s *DMChannel) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *DMChannel) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalDMChannel{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalDMChannel{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *DMChannel) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *DMChannel) IsPrivate() bool {
-	return s.discordObject.IsPrivate
+	return s.internal.IsPrivate
 }
 
 func (s *DMChannel) Recipient() *User {
-	return s.discordObject.Recipient
+	return s.internal.Recipient
 }
 
 func (s *DMChannel) LastMessageID() Snowflake {
-	return s.discordObject.LastMessageID
+	return s.internal.LastMessageID
 }
 
 type Emoji struct {
-	session       *Session `json:"-"`
-	discordObject *internalEmoji
+	session  *Session
+	internal *internalEmoji
 }
 
 func (s *Emoji) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Emoji) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalEmoji{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalEmoji{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Emoji) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Emoji) Name() string {
-	return s.discordObject.Name
+	return s.internal.Name
 }
 
 func (s *Emoji) Roles() []json.RawMessage {
-	return s.discordObject.Roles
+	return s.internal.Roles
 }
 
 func (s *Emoji) RequireColons() bool {
-	return s.discordObject.RequireColons
+	return s.internal.RequireColons
 }
 
 func (s *Emoji) Managed() bool {
-	return s.discordObject.Managed
+	return s.internal.Managed
 }
 
 type Game struct {
-	session       *Session `json:"-"`
-	discordObject *internalGame
+	session  *Session
+	internal *internalGame
 }
 
 func (s *Game) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Game) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalGame{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalGame{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Game) Name() string {
-	return s.discordObject.Name
+	return s.internal.Name
 }
 
 func (s *Game) Type() int {
-	return s.discordObject.Type
+	return s.internal.Type
 }
 
 func (s *Game) URL() string {
-	return s.discordObject.URL
+	return s.internal.URL
 }
 
 type Guild struct {
-	session       *Session `json:"-"`
-	discordObject *internalGuild
+	session  *Session
+	internal *internalGuild
 }
 
 func (s *Guild) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Guild) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalGuild{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalGuild{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Guild) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Guild) Name() string {
-	return s.discordObject.Name
+	return s.internal.Name
 }
 
 func (s *Guild) IconHash() string {
-	return s.discordObject.IconHash
+	return s.internal.IconHash
 }
 
 func (s *Guild) SplashHash() string {
-	return s.discordObject.SplashHash
+	return s.internal.SplashHash
 }
 
 func (s *Guild) OwnerID() Snowflake {
-	return s.discordObject.OwnerID
+	return s.internal.OwnerID
 }
 
 func (s *Guild) Region() string {
-	return s.discordObject.Region
+	return s.internal.Region
 }
 
 func (s *Guild) AFKChannelID() Snowflake {
-	return s.discordObject.AFKChannelID
+	return s.internal.AFKChannelID
 }
 
 func (s *Guild) AFKTimeout() int {
-	return s.discordObject.AFKTimeout
+	return s.internal.AFKTimeout
 }
 
 func (s *Guild) EmbedEnabled() bool {
-	return s.discordObject.EmbedEnabled
+	return s.internal.EmbedEnabled
 }
 
 func (s *Guild) EmbedChannelID() Snowflake {
-	return s.discordObject.EmbedChannelID
+	return s.internal.EmbedChannelID
 }
 
 func (s *Guild) VerificationLevel() int {
-	return s.discordObject.VerificationLevel
+	return s.internal.VerificationLevel
 }
 
 func (s *Guild) DefaultMessageNotifications() int {
-	return s.discordObject.DefaultMessageNotifications
+	return s.internal.DefaultMessageNotifications
 }
 
 func (s *Guild) Roles() []*Role {
-	return s.discordObject.Roles
+	return s.internal.Roles
 }
 
 func (s *Guild) Emojis() []*Emoji {
-	return s.discordObject.Emojis
+	return s.internal.Emojis
 }
 
 func (s *Guild) Features() []json.RawMessage {
-	return s.discordObject.Features
+	return s.internal.Features
 }
 
 func (s *Guild) MFALevel() int {
-	return s.discordObject.MFALevel
+	return s.internal.MFALevel
 }
 
 func (s *Guild) JoinedAt() time.Time {
-	return s.discordObject.JoinedAt
+	return s.internal.JoinedAt
 }
 
 func (s *Guild) Large() bool {
-	return s.discordObject.Large
+	return s.internal.Large
 }
 
 func (s *Guild) Unavailable() bool {
-	return s.discordObject.Unavailable
+	return s.internal.Unavailable
 }
 
 func (s *Guild) MemberCount() int {
-	return s.discordObject.MemberCount
+	return s.internal.MemberCount
 }
 
 func (s *Guild) VoiceStates() []json.RawMessage {
-	return s.discordObject.VoiceStates
+	return s.internal.VoiceStates
 }
 
 func (s *Guild) Members() []GuildMember {
-	return s.discordObject.Members
+	return s.internal.Members
 }
 
 func (s *Guild) Channels() []*Channel {
-	return s.discordObject.Channels
+	return s.internal.Channels
 }
 
 func (s *Guild) Presences() []Presence {
-	return s.discordObject.Presences
+	return s.internal.Presences
 }
 
 type GuildMember struct {
-	session       *Session `json:"-"`
-	discordObject *internalGuildMember
+	session  *Session
+	internal *internalGuildMember
 }
 
 func (s *GuildMember) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *GuildMember) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalGuildMember{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalGuildMember{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *GuildMember) User() *User {
-	return s.discordObject.User
+	return s.internal.User
 }
 
 func (s *GuildMember) Nick() string {
-	return s.discordObject.Nick
+	return s.internal.Nick
 }
 
 func (s *GuildMember) Roles() []Snowflake {
-	return s.discordObject.Roles
+	return s.internal.Roles
 }
 
 func (s *GuildMember) JoinedAt() time.Time {
-	return s.discordObject.JoinedAt
+	return s.internal.JoinedAt
 }
 
 func (s *GuildMember) Deaf() bool {
-	return s.discordObject.Deaf
+	return s.internal.Deaf
 }
 
 func (s *GuildMember) Mute() bool {
-	return s.discordObject.Mute
+	return s.internal.Mute
 }
 
 type Message struct {
-	session       *Session `json:"-"`
-	discordObject *internalMessage
+	session  *Session
+	internal *internalMessage
 }
 
 func (s *Message) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Message) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalMessage{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalMessage{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Message) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Message) ChannelID() Snowflake {
-	return s.discordObject.ChannelID
+	return s.internal.ChannelID
 }
 
 func (s *Message) Author() *User {
-	return s.discordObject.Author
+	return s.internal.Author
 }
 
 func (s *Message) Content() string {
-	return s.discordObject.Content
+	return s.internal.Content
 }
 
 func (s *Message) Timestamp() time.Time {
-	return s.discordObject.Timestamp
+	return s.internal.Timestamp
 }
 
 func (s *Message) EditedTimestamp() time.Time {
-	return s.discordObject.EditedTimestamp
+	return s.internal.EditedTimestamp
 }
 
 func (s *Message) TTS() bool {
-	return s.discordObject.TTS
+	return s.internal.TTS
 }
 
 func (s *Message) MentionEveryone() bool {
-	return s.discordObject.MentionEveryone
+	return s.internal.MentionEveryone
 }
 
 func (s *Message) MentionRoles() []*Role {
-	return s.discordObject.MentionRoles
+	return s.internal.MentionRoles
 }
 
 func (s *Message) Attachments() []Attachment {
-	return s.discordObject.Attachments
+	return s.internal.Attachments
 }
 
 func (s *Message) Embeds() []Embed {
-	return s.discordObject.Embeds
+	return s.internal.Embeds
 }
 
 func (s *Message) Reactions() []Reaction {
-	return s.discordObject.Reactions
+	return s.internal.Reactions
 }
 
 func (s *Message) NOnce() Snowflake {
-	return s.discordObject.NOnce
+	return s.internal.NOnce
 }
 
 func (s *Message) Pinned() bool {
-	return s.discordObject.Pinned
+	return s.internal.Pinned
 }
 
 func (s *Message) WebhookID() string {
-	return s.discordObject.WebhookID
+	return s.internal.WebhookID
 }
 
 type Overwrite struct {
-	session       *Session `json:"-"`
-	discordObject *internalOverwrite
+	session  *Session
+	internal *internalOverwrite
 }
 
 func (s *Overwrite) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Overwrite) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalOverwrite{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalOverwrite{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Overwrite) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Overwrite) Type() string {
-	return s.discordObject.Type
+	return s.internal.Type
 }
 
 func (s *Overwrite) Allow() int {
-	return s.discordObject.Allow
+	return s.internal.Allow
 }
 
 func (s *Overwrite) Deny() int {
-	return s.discordObject.Deny
+	return s.internal.Deny
 }
 
 type Presence struct {
-	session       *Session `json:"-"`
-	discordObject *internalPresence
+	session  *Session
+	internal *internalPresence
 }
 
 func (s *Presence) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Presence) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalPresence{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalPresence{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Presence) User() *User {
-	return s.discordObject.User
+	return s.internal.User
 }
 
 func (s *Presence) Roles() []Snowflake {
-	return s.discordObject.Roles
+	return s.internal.Roles
 }
 
 func (s *Presence) Game() Game {
-	return s.discordObject.Game
+	return s.internal.Game
 }
 
 func (s *Presence) GuildID() Snowflake {
-	return s.discordObject.GuildID
+	return s.internal.GuildID
 }
 
 func (s *Presence) Status() string {
-	return s.discordObject.Status
+	return s.internal.Status
 }
 
 type Reaction struct {
-	session       *Session `json:"-"`
-	discordObject *internalReaction
+	session  *Session
+	internal *internalReaction
 }
 
 func (s *Reaction) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Reaction) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalReaction{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalReaction{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Reaction) Count() int {
-	return s.discordObject.Count
+	return s.internal.Count
 }
 
 func (s *Reaction) Me() bool {
-	return s.discordObject.Me
+	return s.internal.Me
 }
 
 func (s *Reaction) Emoji() *Emoji {
-	return s.discordObject.Emoji
+	return s.internal.Emoji
 }
 
 type Role struct {
-	session       *Session `json:"-"`
-	discordObject *internalRole
+	session  *Session
+	internal *internalRole
 }
 
 func (s *Role) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *Role) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalRole{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalRole{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *Role) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *Role) Name() string {
-	return s.discordObject.Name
+	return s.internal.Name
 }
 
 func (s *Role) Color() int {
-	return s.discordObject.Color
+	return s.internal.Color
 }
 
 func (s *Role) Hoist() bool {
-	return s.discordObject.Hoist
+	return s.internal.Hoist
 }
 
 func (s *Role) Position() int {
-	return s.discordObject.Position
+	return s.internal.Position
 }
 
 func (s *Role) Permissions() int {
-	return s.discordObject.Permissions
+	return s.internal.Permissions
 }
 
 func (s *Role) Managed() bool {
-	return s.discordObject.Managed
+	return s.internal.Managed
 }
 
 func (s *Role) Mentionable() bool {
-	return s.discordObject.Mentionable
+	return s.internal.Mentionable
 }
 
 type User struct {
-	session       *Session `json:"-"`
-	discordObject *internalUser
+	session  *Session
+	internal *internalUser
 }
 
 func (s *User) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.discordObject)
+	return json.Marshal(s.internal)
 }
 
 func (s *User) UnmarshalJSON(b []byte) error {
-	s.discordObject = &internalUser{}
-	return json.Unmarshal(b, &s.discordObject)
+	s.internal = &internalUser{}
+	return json.Unmarshal(b, &s.internal)
 }
 
 func (s *User) ID() Snowflake {
-	return s.discordObject.ID
+	return s.internal.ID
 }
 
 func (s *User) Username() string {
-	return s.discordObject.Username
+	return s.internal.Username
 }
 
 func (s *User) Discriminator() string {
-	return s.discordObject.Discriminator
+	return s.internal.Discriminator
 }
 
 func (s *User) AvatarHash() string {
-	return s.discordObject.AvatarHash
+	return s.internal.AvatarHash
 }
 
 func (s *User) Bot() bool {
-	return s.discordObject.Bot
+	return s.internal.Bot
 }
 
 func (s *User) MFAEnabled() bool {
-	return s.discordObject.MFAEnabled
+	return s.internal.MFAEnabled
 }
 
 func (s *User) Verified() bool {
-	return s.discordObject.Verified
+	return s.internal.Verified
 }
 
 func (s *User) EMail() string {
-	return s.discordObject.EMail
+	return s.internal.EMail
 }

@@ -14,13 +14,17 @@ import (
 )
 
 func (s *Session) doHttpGet(endPoint EndPoint, target interface{}) (err error) {
-	err = s.doRequest("GET", endPoint.URL, nil, target)
-	return err
+	err = s.rateLimit(endPoint, func() (*http.Response, error) {
+		return s.doRequest("GET", endPoint.URL, nil, target)
+	})
+	return
 }
 
-func (s *Session) doHttpDelete(endPoint EndPoint, target interface{}) error {
-	err := s.doRequest("DELETE", endPoint.URL, nil, target)
-	return err
+func (s *Session) doHttpDelete(endPoint EndPoint, target interface{}) (err error) {
+	err = s.rateLimit(endPoint, func() (*http.Response, error) {
+		return s.doRequest("DELETE", endPoint.URL, nil, target)
+	})
+	return
 }
 
 func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err error) {
@@ -28,25 +32,26 @@ func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err e
 
 	if err == nil {
 		byteBuf := bytes.NewReader(jsonBody)
-		err = s.doRequest("POST", endPoint.URL, byteBuf, target)
+		err = s.rateLimit(endPoint, func() (*http.Response, error) {
+			return s.doRequest("POST", endPoint.URL, byteBuf, target)
+		})
 	}
 
-	return err
+	return
 }
 
-func (s *Session) doRequest(method, url string, body io.Reader, target interface{}) (err error) {
+func (s *Session) doRequest(method, url string, body io.Reader, target interface{}) (response *http.Response, err error) {
 	logger.Debugf("HTTP %s %s", method, strings.Replace(url, BaseUrl, "", 1))
 
 	var (
-		req      *http.Request
-		response *http.Response
-		client   = http.Client{
+		req    *http.Request
+		client = http.Client{
 			Timeout: 10 * time.Second,
 		}
 	)
 
 	if req, err = http.NewRequest(method, url, body); err != nil {
-		return err
+		return
 	}
 
 	req.Header.Add("Content-Type", "application/json")
@@ -54,23 +59,34 @@ func (s *Session) doRequest(method, url string, body io.Reader, target interface
 	req.Header.Add("User-Agent", "DiscordBot (https://github.com/ikkerens/disgo, 1.0.0)")
 
 	if response, err = client.Do(req); err != nil {
-		return err
+		return
 	}
 
 	defer response.Body.Close()
-	if response.StatusCode < 200 || response.StatusCode > 399 {
-		body, err := ioutil.ReadAll(response.Body)
+
+	switch response.StatusCode {
+	case 200:
+		fallthrough
+	case 201:
+		if target != nil {
+			body := response.Body
+			defer body.Close()
+			if err = json.NewDecoder(body).Decode(target); err != nil {
+				return
+			}
+		}
+	case 204:
+		fallthrough
+	case 304:
+		return
+	default:
+		var bodyBuf []byte
+		bodyBuf, err = ioutil.ReadAll(response.Body)
 		if err != nil {
-			return err
+			return
 		}
-		return fmt.Errorf("Discord replied with status code %d: %s", response.StatusCode, string(body))
-	} else if target != nil {
-		body := response.Body
-		defer body.Close()
-		if err = json.NewDecoder(body).Decode(target); err != nil {
-			return err
-		}
+		return response, fmt.Errorf("Discord replied with status code %d: %s", response.StatusCode, string(bodyBuf))
 	}
 
-	return nil
+	return
 }
