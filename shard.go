@@ -205,7 +205,7 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 }
 
 func (s *shard) readFrame() (*receivedFrame, error) {
-	logger.Tracef("Session.readFrame() called")
+	logger.Tracef("Shard.readFrame() called")
 	msgType, msg, err := s.webSocket.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -238,7 +238,6 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 }
 
 func (s *shard) reconnect() {
-	logger.Tracef("Session.reconnect() called")
 	if !s.session.shuttingDown {
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
 		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
@@ -264,7 +263,7 @@ func (s *shard) onClose(code int, text string) error {
 }
 
 func (s *shard) disconnect(code int, text string) {
-	logger.Tracef("Session.disconnect() called")
+	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
 	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))

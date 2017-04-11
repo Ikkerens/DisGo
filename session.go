@@ -1,21 +1,44 @@
 package disgo
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/slf4go/logger"
 )
 
 type Session struct {
 	token     string
-	tokenType TokenType
+	tokenType string
 	wsUrl     string
 
 	shards       []*shard
 	shuttingDown bool
 
 	objects map[Snowflake]interface{}
+}
+
+func BuildWithBotToken(token string) (*Session, error) {
+	logger.Trace("BuildWithBotToken() called")
+
+	if token == "" {
+		return nil, errors.New("token cannot be empty")
+	}
+
+	session := &Session{tokenType: "Bot", token: token, objects: make(map[Snowflake]interface{})}
+
+	gateway := gatewayGetResponse{}
+	err := session.doRequest("GET", EndPointBotGateway().URL, nil, &gateway)
+	if err != nil {
+		return nil, err
+	}
+
+	session.wsUrl = gateway.Url + "?v=5&encoding=json"
+	session.shards = make([]*shard, gateway.Shards)
+
+	return session, nil
 }
 
 func (s *Session) Connect() error {
