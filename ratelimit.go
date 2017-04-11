@@ -88,6 +88,8 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 		}
 
 		// Automatically queue a retry, but this one will wait for the timers to expire
+		bucket.mutex.Unlock()
+		global.Unlock()
 		return s.rateLimit(endPoint, call)
 	}
 
