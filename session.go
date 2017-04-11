@@ -1,17 +1,10 @@
 package disgo
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/slf4go/logger"
 )
 
 type Session struct {
@@ -41,73 +34,6 @@ func (s *Session) Connect() error {
 	}
 
 	return nil
-}
-
-func (s *Session) authorizationHeader() string {
-	return s.tokenType.prefix + " " + s.token
-}
-
-func (s *Session) doHttpGet(url string, target interface{}) (err error) {
-	response, err := s.doRequest("GET", url, nil)
-
-	body := response.Body
-	defer body.Close()
-	if err = json.NewDecoder(body).Decode(target); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Session) doHttpDelete(url string) error {
-	_, err := s.doRequest("DELETE", url, nil)
-	return err
-}
-
-func (s *Session) doHttpPost(url string, body interface{}) (err error) {
-	jsonBody, err := json.Marshal(body)
-
-	if err == nil {
-		byteBuf := bytes.NewReader(jsonBody)
-		_, err = s.doRequest("POST", url, byteBuf)
-	}
-
-	return err
-}
-
-func (s *Session) doRequest(method, url string, body io.Reader) (response *http.Response, err error) {
-	path := strings.Replace(url, BaseUrl, "", 1)
-	logger.Debugf("HTTP %s %s", method, path)
-
-	var (
-		req    *http.Request
-		client = http.Client{
-			Timeout: 10 * time.Second,
-		}
-	)
-
-	if req, err = http.NewRequest(method, url, body); err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", s.authorizationHeader())
-	req.Header.Add("User-Agent", "DiscordBot (https://github.com/ikkerens/disgo, 1.0.0)")
-
-	if response, err = client.Do(req); err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode < 200 || response.StatusCode > 399 {
-		defer response.Body.Close()
-		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("Discord replied with status code %d: %s", response.StatusCode, string(body))
-	}
-
-	return response, nil
 }
 
 func (s *Session) Close() {
