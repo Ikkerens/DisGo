@@ -42,10 +42,12 @@ func (e *GuildCreateEvent) setSession(s *Session) {
 	e.Guild = s.registerGuild(e.Guild)
 }
 
+// MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
 func (e *GuildCreateEvent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.Guild)
 }
 
+// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
 func (e *GuildCreateEvent) UnmarshalJSON(b []byte) error {
 	e.Guild = &Guild{}
 	return json.Unmarshal(b, &e.Guild)
@@ -59,10 +61,12 @@ func (e *MessageCreateEvent) setSession(s *Session) {
 	e.Message = s.registerMessage(e.Message)
 }
 
+// MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
 func (e *MessageCreateEvent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.Message)
 }
 
+// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
 func (e *MessageCreateEvent) UnmarshalJSON(b []byte) error {
 	e.Message = &Message{}
 	return json.Unmarshal(b, &e.Message)
@@ -82,10 +86,12 @@ func (*PresenceUpdateEvent) eventName() string {
 func (e *PresenceUpdateEvent) setSession(s *Session) {
 }
 
+// MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
 func (e *PresenceUpdateEvent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.Presence)
 }
 
+// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
 func (e *PresenceUpdateEvent) UnmarshalJSON(b []byte) error {
 	e.Presence = &Presence{}
 	return json.Unmarshal(b, &e.Presence)

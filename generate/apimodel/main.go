@@ -82,21 +82,26 @@ func main() {
 		)
 
 		{{range .}}
+			// {{.Exported}} is based on the Discord object with the same name.
+			// Any fields can be obtained by calling the respective getters.
 			type {{.Exported}} struct {
 				session *Session
 				internal *{{.Name}}
 			}
 
+			// MarshalJSON is used to convert this object into its json representation for Discord
 			func (s *{{.Exported}}) MarshalJSON() ([]byte, error) {
 				return json.Marshal(s.internal)
 			}
 
+			// UnmarshalJSON is used to convert json discord objects back into their respective structs
 			func (s *{{.Exported}}) UnmarshalJSON(b []byte) error {
 				s.internal = &{{.Name}}{}
 				return json.Unmarshal(b, &s.internal)
 			}
 
 			{{range .Fields}}
+				// {{ .Name}} is used to export the {{.Name}} from this struct.
 				func (s *{{.Parent.Exported}}) {{.Name}}() {{.TypeStr}} {
 					return s.internal.{{.Name}}
 				}

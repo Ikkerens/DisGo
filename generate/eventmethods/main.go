@@ -15,7 +15,7 @@ import (
 	"github.com/slf4go/logger"
 )
 
-var registeredTypes = [...]string{"User", "Guild", "Channel", "Message"}
+var registeredTypes = [...]string{"User", "Guild", "Channel", "Message", "Role"}
 
 type eventDeclaration struct {
 	Name      string
@@ -125,10 +125,12 @@ func main() {
 				{{end}} }
 
 			{{if .Embed}}
+				// MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
 				func (e *{{.Name}}) MarshalJSON() ([]byte, error) {
 					return json.Marshal(e.{{.Embed}})
 				}
 
+				// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
 				func (e *{{.Name}}) UnmarshalJSON(b []byte) error {
 					e.{{.Embed}} = &{{.Embed}}{}
 					return json.Unmarshal(b, &e.{{.Embed}})

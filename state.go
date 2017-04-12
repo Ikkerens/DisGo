@@ -15,6 +15,21 @@ func (s *Session) registerGuild(guild *Guild) *Guild {
 	}
 }
 
+func (s *Session) registerRole(role *Role) *Role {
+	if snowflake, exists := s.objects[role.ID()]; exists {
+		if registered, isRole := snowflake.(*Role); isRole {
+			// TODO Merge data
+			return registered
+		} else {
+			panic("Discord sent us a duplicate snowflake with different types")
+		}
+	} else {
+		s.objects[role.ID()] = role
+		role.session = s
+		return role
+	}
+}
+
 func (s *Session) registerUser(user *User) *User {
 	if snowflake, exists := s.objects[user.ID()]; exists {
 		if registered, isUser := snowflake.(*User); isUser {

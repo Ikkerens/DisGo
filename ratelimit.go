@@ -35,11 +35,9 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 
 	// Wait for the bucket to expire if we're out of attempts
 	now := time.Now()
-	if bucket.remaining == 0 {
-		if bucket.reset.After(now) {
-			logger.Warnf("We are out of slots for %s, waiting...", endPoint.Bucket)
-			time.Sleep(bucket.reset.Sub(now))
-		}
+	if bucket.remaining == 0 && bucket.reset.After(now) {
+		logger.Warnf("We are out of slots for %s, waiting...", endPoint.Bucket)
+		time.Sleep(bucket.reset.Sub(now))
 	}
 
 	// Once we're past the bucket lock, lock globally

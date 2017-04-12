@@ -81,7 +81,7 @@ func (s *shard) handshake() error {
 
 func (s *shard) identify() error {
 	if s.sessionID != "" {
-		logger.Debugf("Resuming connectiong starting at sequence %d.", s.sequence)
+		logger.Debugf("Resuming connection starting at sequence %d.", s.sequence)
 		s.sendFrame(&gatewayFrame{opResume, resumePayload{
 			Token:     s.session.token,
 			SessionID: s.sessionID,

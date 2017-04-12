@@ -209,7 +209,7 @@ type internalGuild struct {
 	VerificationLevel           int               `json:"verification_level"`
 	DefaultMessageNotifications int               `json:"default_message_notifications"`
 	Roles                       []*Role           `json:"roles"`
-	Emojis                      []*Emoji          `json:"emojis"`
+	Emojis                      []Emoji           `json:"emojis"`
 	Features                    []json.RawMessage `json:"features"`
 	MFALevel                    int               `json:"mfa_level"`
 	JoinedAt                    time.Time         `json:"joined_at,string"`
@@ -225,18 +225,18 @@ type internalGuild struct {
 type internalGuildMember struct {
 	User     *User       `json:"user"`
 	Nick     string      `json:"nick,omitempty"`
-	Roles    []Snowflake `json:"roles"`
+	RolesIDs []Snowflake `json:"roles"`
 	JoinedAt time.Time   `json:"joined_at"`
 	Deaf     bool        `json:"deaf"`
 	Mute     bool        `json:"mute"`
 }
 
 type internalEmoji struct {
-	ID            Snowflake         `json:"id,omitempty"`
-	Name          string            `json:"name"`
-	Roles         []json.RawMessage `json:"roles"`
-	RequireColons bool              `json:"require_colons"`
-	Managed       bool              `json:"managed"`
+	ID            Snowflake `json:"id,omitempty"`
+	Name          string    `json:"name"`
+	Roles         []*Role   `json:"roles"`
+	RequireColons bool      `json:"require_colons"`
+	Managed       bool      `json:"managed"`
 }
 
 /******************/
@@ -266,11 +266,11 @@ type internalRole struct {
 }
 
 type internalPresence struct {
-	User    *User       `json:"user"`
-	Roles   []Snowflake `json:"roles"`
-	Game    Game        `json:"game,omitempty"`
-	GuildID Snowflake   `json:"guild_id"`
-	Status  string      `json:"status"`
+	User    *User     `json:"user"`
+	Roles   []*Role   `json:"roles"`
+	Game    Game      `json:"game,omitempty"`
+	GuildID Snowflake `json:"guild_id"`
+	Status  string    `json:"status"`
 }
 
 type internalGame struct {
