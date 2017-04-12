@@ -1,5 +1,3 @@
-# DisGo
-[![Build Status](https://travis-ci.org/Ikkerens/DisGo.svg?branch=master)](https://travis-ci.org/Ikkerens/DisGo)
-[![GoDoc](https://godoc.org/github.com/ikkerens/disgo?status.svg)](https://godoc.org/github.com/ikkerens/disgo)
+# DisGo [![Build Status](https://travis-ci.org/Ikkerens/DisGo.svg?branch=master)](https://travis-ci.org/Ikkerens/DisGo) [![Go Report Card](https://goreportcard.com/badge/github.com/Ikkerens/DisGo)](https://goreportcard.com/report/github.com/Ikkerens/DisGo) [![GoDoc](https://godoc.org/github.com/Ikkerens/DisGo?status.svg)](https://godoc.org/github.com/Ikkerens/DisGo) 
 
 This is an in-development Discord API. Check back later!
