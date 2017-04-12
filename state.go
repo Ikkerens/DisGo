@@ -20,9 +20,9 @@ func (s *Session) registerRole(role *Role) *Role {
 		if registered, isRole := snowflake.(*Role); isRole {
 			// TODO Merge data
 			return registered
-		} else {
-			panic("Discord sent us a duplicate snowflake with different types")
 		}
+
+		panic("Discord sent us a duplicate snowflake with different types")
 	} else {
 		s.objects[role.ID()] = role
 		role.session = s
@@ -35,9 +35,9 @@ func (s *Session) registerUser(user *User) *User {
 		if registered, isUser := snowflake.(*User); isUser {
 			// TODO Merge data
 			return registered
-		} else {
-			panic("Discord sent us a duplicate snowflake with different types")
 		}
+
+		panic("Discord sent us a duplicate snowflake with different types")
 	} else {
 		s.objects[user.ID()] = user
 		user.session = s
@@ -50,9 +50,9 @@ func (s *Session) registerChannel(channel *Channel) *Channel {
 		if registered, isChannel := snowflake.(*Channel); isChannel {
 			// TODO Merge data
 			return registered
-		} else {
-			panic("Discord sent us a duplicate snowflake with different types")
 		}
+
+		panic("Discord sent us a duplicate snowflake with different types")
 	} else {
 		s.objects[channel.ID()] = channel
 		channel.session = s
@@ -65,9 +65,9 @@ func (s *Session) registerMessage(message *Message) *Message {
 		if registered, isMessage := snowflake.(*Message); isMessage {
 			// TODO Merge data
 			return registered
-		} else {
-			panic("Discord sent us a duplicate snowflake with different types")
 		}
+
+		panic("Discord sent us a duplicate snowflake with different types")
 	} else {
 		s.objects[message.ID()] = message
 		message.session = s

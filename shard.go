@@ -121,14 +121,14 @@ func (s *shard) identify() error {
 			s.session.dispatchEvent(frame)
 			return nil
 		} else {
-			return errors.New(fmt.Sprintf("Discord sent event of type '%s', expected 'READY' or 'RESUMED'", frame.EventName))
+			return fmt.Errorf("Discord sent event of type '%s', expected 'READY' or 'RESUMED'", frame.EventName)
 		}
 	} else if frame.Op == opInvalidSession {
 		s.sessionID = "" // Invalidate session and retry
 		s.identify()
 		return nil
 	} else {
-		return errors.New(fmt.Sprintf("Unexpected opCode received from Discord: %d", frame.Op))
+		return fmt.Errorf("Unexpected opCode received from Discord: %d", frame.Op)
 	}
 }
 

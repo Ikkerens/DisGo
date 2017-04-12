@@ -151,7 +151,7 @@ func determineType(field ast.Expr) (typeStr string, err error) {
 		}
 		typeStr = "[]" + subType
 	default:
-		err = errors.New(fmt.Sprintf("Unknown field type (%T): %+v", v, v))
+		err = fmt.Errorf("Unknown field type (%T): %+v", v, v)
 	}
 
 	return

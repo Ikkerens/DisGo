@@ -96,10 +96,10 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	if headerRemaining != "" {
 		bucket.remaining, parseError = strconv.Atoi(headerRemaining)
 	}
-	if parseError == nil && headerLimit != "" {
+	if headerLimit != "" {
 		bucket.limit, parseError = strconv.Atoi(headerLimit)
 	}
-	if parseError == nil && headerReset != "" {
+	if headerReset != "" {
 		var unix int64
 		unix, parseError = strconv.ParseInt(headerReset, 10, 64)
 		if parseError == nil {
