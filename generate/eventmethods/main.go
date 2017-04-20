@@ -22,6 +22,7 @@ type eventDeclaration struct {
 	Name      string
 	EventName string
 	Embed     string
+	EmbedSelf bool
 
 	StarTypes  []registeredEventField
 	ArrayTypes []registeredEventField
@@ -56,8 +57,12 @@ func main() {
 					switch f := field.Type.(type) {
 					case *ast.StarExpr:
 						typ := f.X.(*ast.Ident).Name
-						if generate.IsRegisteredType(typ) {
+						if generate.IsRegisteredType(typ) && len(field.Names) == 1 {
 							event.StarTypes = append(event.StarTypes, registeredEventField{field.Names[0].Name, typ})
+						} else if len(field.Names) == 0 {
+							event.Embed = typ
+							event.EmbedSelf = true
+							event.StarTypes = append(event.StarTypes, registeredEventField{typ, typ})
 						}
 					case *ast.ArrayType:
 						star, isStar := f.Elt.(*ast.StarExpr)
@@ -116,14 +121,12 @@ func main() {
 				{{end}} }
 
 			{{if .Embed}}
-				// MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
-				func (e *{{.Name}}) MarshalJSON() ([]byte, error) {
-					return json.Marshal(e.{{.Embed}})
-				}
-
 				// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
 				func (e *{{.Name}}) UnmarshalJSON(b []byte) error {
-					e.{{.Embed}} = &{{.Embed}}{}
+					e.{{.Embed}} = &{{.Embed}}{} {{if .EmbedSelf}}
+					if err := json.Unmarshal(b, e); err != nil {
+						return err
+					} {{end}}
 					return json.Unmarshal(b, &e.{{.Embed}})
 				}
 			{{end}}

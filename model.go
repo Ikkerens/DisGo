@@ -94,13 +94,9 @@ type internalChannel struct {
 	LastMessageID        Snowflake   `json:"last_message_id,omitempty"`
 	Bitrate              int         `json:"bitrate"`
 	UserLimit            int         `json:"user_limit"`
-}
 
-type internalDMChannel struct {
-	ID            Snowflake `json:"id"`
-	IsPrivate     bool      `json:"is_private"`
-	Recipient     *User     `json:"recipient"`
-	LastMessageID Snowflake `json:"last_message_id"`
+	// DMChannel
+	Recipient *User `json:"recipient"`
 }
 
 type internalMessage struct {

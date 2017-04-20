@@ -140,42 +140,9 @@ func (s *Channel) UserLimit() int {
 	return s.internal.UserLimit
 }
 
-// DMChannel is based on the Discord object with the same name.
-// Any fields can be obtained by calling the respective getters.
-type DMChannel struct {
-	session  *Session
-	internal *internalDMChannel
-}
-
-// MarshalJSON is used to convert this object into its json representation for Discord
-func (s *DMChannel) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.internal)
-}
-
-// UnmarshalJSON is used to convert json discord objects back into their respective structs
-func (s *DMChannel) UnmarshalJSON(b []byte) error {
-	s.internal = &internalDMChannel{}
-	return json.Unmarshal(b, &s.internal)
-}
-
-// ID is used to export the ID from this struct.
-func (s *DMChannel) ID() Snowflake {
-	return s.internal.ID
-}
-
-// IsPrivate is used to export the IsPrivate from this struct.
-func (s *DMChannel) IsPrivate() bool {
-	return s.internal.IsPrivate
-}
-
 // Recipient is used to export the Recipient from this struct.
-func (s *DMChannel) Recipient() *User {
+func (s *Channel) Recipient() *User {
 	return s.internal.Recipient
-}
-
-// LastMessageID is used to export the LastMessageID from this struct.
-func (s *DMChannel) LastMessageID() Snowflake {
-	return s.internal.LastMessageID
 }
 
 // Emoji is based on the Discord object with the same name.
