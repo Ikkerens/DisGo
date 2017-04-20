@@ -7,6 +7,7 @@ import (
 )
 
 //go:generate go run generate/apimodel/main.go
+//go:generate go run generate/state/main.go
 
 /******************/
 /* Resources/Meta */
@@ -63,6 +64,18 @@ func (s *UnixTimeStamp) UnmarshalJSON(b []byte) error {
 	}
 
 	return err
+}
+
+type IDer interface {
+	ID() Snowflake
+}
+
+type IDObject struct {
+	Id Snowflake `json:"id"`
+}
+
+func (o *IDObject) ID() Snowflake {
+	return o.Id
 }
 
 /*********************/
@@ -266,11 +279,11 @@ type internalRole struct {
 }
 
 type internalPresence struct {
-	User    *User     `json:"user"`
-	Roles   []*Role   `json:"roles"`
-	Game    Game      `json:"game,omitempty"`
-	GuildID Snowflake `json:"guild_id"`
-	Status  string    `json:"status"`
+	User    *User       `json:"user"`
+	Roles   []Snowflake `json:"roles"`
+	Game    Game        `json:"game,omitempty"`
+	GuildID Snowflake   `json:"guild_id"`
+	Status  string      `json:"status"`
 }
 
 type internalGame struct {

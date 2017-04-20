@@ -1,5 +1,7 @@
 package main
 
+// +build ignore
+
 import (
 	"bytes"
 	"fmt"
@@ -12,6 +14,7 @@ import (
 	"sort"
 	"text/template"
 
+	"github.com/ikkerens/disgo/generate"
 	"github.com/slf4go/logger"
 )
 
@@ -22,9 +25,10 @@ type internalField struct {
 }
 
 type internalType struct {
-	Name     string
-	Exported string
-	Fields   []internalField
+	Name      string
+	Exported  string
+	StateType bool
+	Fields    []internalField
 }
 
 func main() {
@@ -46,7 +50,7 @@ func main() {
 			structDef, ok := typ.Type.(*ast.StructType)
 
 			if ok {
-				typeDef := internalType{name, name[8:], make([]internalField, 0)}
+				typeDef := internalType{name, name[8:], generate.IsRegisteredType(name[8:]), make([]internalField, 0)}
 				logger.Infof("Creating API struct for %s with name %s.", typeDef.Name, typeDef.Exported)
 				for _, field := range structDef.Fields.List {
 					typeStr, err := determineType(field.Type)
@@ -94,8 +98,14 @@ func main() {
 			}
 
 			// UnmarshalJSON is used to convert json discord objects back into their respective structs
-			func (s *{{.Exported}}) UnmarshalJSON(b []byte) error {
-				s.internal = &{{.Name}}{}
+			func (s *{{.Exported}}) UnmarshalJSON(b []byte) error { {{if .StateType}}
+				id := IDObject{}
+				if err := json.Unmarshal(b, &id); err != nil {
+					return err
+				}
+
+				*s = *objects.register{{.Exported}}(&id) {{else}}
+					s.internal = &{{.Name}}{} {{end}}
 				return json.Unmarshal(b, &s.internal)
 			}
 

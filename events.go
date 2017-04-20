@@ -3,12 +3,11 @@ package disgo
 //go:generate go run generate/eventmethods/main.go
 
 type ReadyEvent struct {
-	GatewayVersion  int          `json:"v"`
-	User            *User        `json:"user"`
-	PrivateChannels []*DMChannel `json:"private_channels"`
-	Guilds          []*Guild     `json:"guilds"`
-	SessionID       string       `json:"session_id"`
-	Servers         []string     `json:"_trace"`
+	GatewayVersion int      `json:"v"`
+	User           *User    `json:"user"`
+	Guilds         []*Guild `json:"guilds"`
+	SessionID      string   `json:"session_id"`
+	Servers        []string `json:"_trace"`
 }
 
 type ResumedEvent struct {

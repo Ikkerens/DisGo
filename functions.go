@@ -1,27 +1,26 @@
 package disgo
 
-import "encoding/json"
-
 type createMessage struct {
-	Content string           `json:"content"`
-	NOnce   Snowflake        `json:"nonce,omitempty"`
-	TTS     bool             `json:"tts,omitempty"`
-	File    *json.RawMessage `json:"file,omitempty"`
-	Embed   *Embed           `json:"embed,omitempty"`
+	Content string `json:"content"`
+	Embed   *Embed `json:"embed,omitempty"`
 }
 
-func (s *Session) SendMessage(channelID Snowflake, content string) (message *Message, err error) {
-	message = &Message{}
-	err = s.doHttpPost(EndPointMessages(channelID), createMessage{Content: content}, message)
-	s.registerMessage(message)
-	return
+func (s *Session) SendMessage(channelID Snowflake, content string) (*Message, error) {
+	message := &Message{}
+	err := s.doHttpPost(EndPointMessages(channelID), createMessage{Content: content}, message)
+	if err != nil {
+		return nil, err
+	}
+	return objects.registerMessage(message), nil
 }
 
-func (s *Session) SendEmbed(channelID Snowflake, embed Embed) (message *Message, err error) {
-	message = &Message{}
-	err = s.doHttpPost(EndPointMessages(channelID), createMessage{Content: "", Embed: &embed}, message)
-	s.registerMessage(message)
-	return
+func (s *Session) SendEmbed(channelID Snowflake, embed Embed) (*Message, error) {
+	message := &Message{}
+	err := s.doHttpPost(EndPointMessages(channelID), createMessage{Content: "", Embed: &embed}, message)
+	if err != nil {
+		return nil, err
+	}
+	return objects.registerMessage(message), nil
 }
 
 func (s *Session) DeleteMessage(channelID, messageID Snowflake) error {

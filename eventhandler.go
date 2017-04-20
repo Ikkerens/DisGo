@@ -81,9 +81,8 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 		return
 	}
 
-	(*event).setSession(s)
-
 	logger.Debugf("Dispatching event %s to handlers", (*event).eventName())
+	(*event).setSession(s)
 	handlerSlice, exists := handlers[(*event).eventName()]
 	if exists {
 		for _, handler := range handlerSlice {

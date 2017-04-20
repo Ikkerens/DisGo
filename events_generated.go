@@ -39,7 +39,7 @@ func (*GuildCreateEvent) eventName() string {
 }
 
 func (e *GuildCreateEvent) setSession(s *Session) {
-	e.Guild = s.registerGuild(e.Guild)
+	e.Guild.session = s
 }
 
 // MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
@@ -58,7 +58,7 @@ func (*MessageCreateEvent) eventName() string {
 }
 
 func (e *MessageCreateEvent) setSession(s *Session) {
-	e.Message = s.registerMessage(e.Message)
+	e.Message.session = s
 }
 
 // MarshalJSON is used to make sure the embedded object of this event is Marshalled, not the event itself
@@ -102,9 +102,9 @@ func (*ReadyEvent) eventName() string {
 }
 
 func (e *ReadyEvent) setSession(s *Session) {
-	e.User = s.registerUser(e.User)
-	for i, p := range e.Guilds {
-		e.Guilds[i] = s.registerGuild(p)
+	e.User.session = s
+	for _, item := range e.Guilds {
+		item.session = s
 	}
 }
 

@@ -3,6 +3,7 @@ package disgo
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -14,10 +15,12 @@ type Session struct {
 	tokenType string
 	wsUrl     string
 
+	rateLimitBuckets map[string]*rateBucket
+	globalRateLimit  sync.Mutex
+	globalReset      time.Time
+
 	shards       []*shard
 	shuttingDown bool
-
-	objects map[Snowflake]interface{}
 }
 
 func BuildWithBotToken(token string) (*Session, error) {
@@ -27,7 +30,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 		return nil, errors.New("token cannot be empty")
 	}
 
-	session := &Session{tokenType: "Bot", token: token, objects: make(map[Snowflake]interface{})}
+	session := &Session{tokenType: "Bot", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
 
 	gateway := gatewayGetResponse{}
 	_, err := session.doRequest("GET", EndPointBotGateway().URL, nil, &gateway)

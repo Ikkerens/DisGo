@@ -17,16 +17,12 @@ type rateBucket struct {
 	mutex     sync.Mutex
 }
 
-var buckets = make(map[string]*rateBucket)
-var global sync.Mutex
-var globalReset time.Time
-
 func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, error)) error {
 	// Get the bucket, and if it does not exist, create it.
-	bucket, exists := buckets[endPoint.Bucket]
+	bucket, exists := s.rateLimitBuckets[endPoint.Bucket]
 	if !exists {
 		bucket = &rateBucket{remaining: 1}
-		buckets[endPoint.Bucket] = bucket
+		s.rateLimitBuckets[endPoint.Bucket] = bucket
 	}
 
 	// Lock this bucket
@@ -41,14 +37,14 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	}
 
 	// Once we're past the bucket lock, lock globally
-	global.Lock()
-	defer global.Unlock()
+	s.globalRateLimit.Lock()
+	defer s.globalRateLimit.Unlock()
 
-	// Wait for the global lock if we're being globally ratelimited
+	// Wait for the globalRateLimit lock if we're being globally ratelimited
 	now = time.Now()
-	if globalReset.After(now) {
-		logger.Warnf("We are waiting for the global ratelimit...")
-		time.Sleep(globalReset.Sub(now))
+	if s.globalReset.After(now) {
+		logger.Warnf("We are waiting for the globalRateLimit ratelimit...")
+		time.Sleep(s.globalReset.Sub(now))
 	}
 
 	// Okay, we've exhausted all possible ratelimit timers, let's send
@@ -78,7 +74,7 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 		resetTime := now.Add(time.Duration(retryAfter) * time.Millisecond)
 		if headerGlobal == "true" {
 			logger.Error("We are being globally ratelimited!")
-			globalReset = resetTime
+			s.globalReset = resetTime
 		} else {
 			logger.Errorf("We are being ratelimited on %s!", endPoint.Bucket)
 			bucket.reset = resetTime
@@ -87,7 +83,7 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 
 		// Automatically queue a retry, but this one will wait for the timers to expire
 		bucket.mutex.Unlock()
-		global.Unlock()
+		s.globalRateLimit.Unlock()
 		return s.rateLimit(endPoint, call)
 	}
 

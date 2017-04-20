@@ -1,5 +1,7 @@
 package main
 
+// +build ignore
+
 import (
 	"bytes"
 	"go/ast"
@@ -12,10 +14,9 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/ikkerens/disgo/generate"
 	"github.com/slf4go/logger"
 )
-
-var registeredTypes = [...]string{"User", "Guild", "Channel", "Message", "Role"}
 
 type eventDeclaration struct {
 	Name      string
@@ -29,16 +30,6 @@ type eventDeclaration struct {
 type registeredEventField struct {
 	FieldName string
 	TypeName  string
-}
-
-func isRegisteredType(typ string) bool {
-	for _, compare := range registeredTypes {
-		if compare == typ {
-			return true
-		}
-	}
-
-	return false
 }
 
 func main() {
@@ -56,7 +47,7 @@ func main() {
 			fields := object.Decl.(*ast.TypeSpec).Type.(*ast.StructType).Fields.List
 			if len(fields) == 1 && len(fields[0].Names) == 0 {
 				event.Embed = fields[0].Type.(*ast.StarExpr).X.(*ast.Ident).Name
-				if isRegisteredType(event.Embed) {
+				if generate.IsRegisteredType(event.Embed) {
 					event.StarTypes = append(event.StarTypes, registeredEventField{event.Embed, event.Embed})
 				}
 				logger.Infof("%s embeds %s, adding Marshal methods", event.Name, event.Embed)
@@ -65,14 +56,14 @@ func main() {
 					switch f := field.Type.(type) {
 					case *ast.StarExpr:
 						typ := f.X.(*ast.Ident).Name
-						if isRegisteredType(typ) {
+						if generate.IsRegisteredType(typ) {
 							event.StarTypes = append(event.StarTypes, registeredEventField{field.Names[0].Name, typ})
 						}
 					case *ast.ArrayType:
 						star, isStar := f.Elt.(*ast.StarExpr)
 						if isStar {
 							typ := star.X.(*ast.Ident).Name
-							if isRegisteredType(typ) {
+							if generate.IsRegisteredType(typ) {
 								event.ArrayTypes = append(event.ArrayTypes, registeredEventField{field.Names[0].Name, typ})
 							}
 						}
@@ -102,8 +93,8 @@ func main() {
 			var event Event
 
 			switch eventName { {{range .}}
-			case "{{ .EventName}}":
-				event = &{{ .Name}}{} {{end}}
+			case "{{.EventName}}":
+				event = &{{.Name}}{} {{end}}
 			default:
 				logger.Errorf("Event with name '%s' was dispatched by Discord, but we don't know this event. (DisGo outdated?)", eventName)
 				return nil
@@ -118,9 +109,9 @@ func main() {
 			}
 
 			func (e *{{.Name}}) setSession(s *Session) { {{range .StarTypes}}
-					e.{{ .FieldName}} = s.register{{ .TypeName}}(e.{{ .FieldName}}) {{end}}
-				{{range .ArrayTypes}} for i, p := range e.{{ .FieldName}} {
-						e.{{ .FieldName}}[i] = s.register{{ .TypeName}}(p)
+					e.{{.FieldName}}.session = s {{end}}
+				{{range .ArrayTypes}} for _, item := range e.{{.FieldName}} {
+						item.session = s
 					}
 				{{end}} }
 

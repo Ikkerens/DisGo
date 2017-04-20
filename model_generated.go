@@ -75,7 +75,12 @@ func (s *Channel) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON is used to convert json discord objects back into their respective structs
 func (s *Channel) UnmarshalJSON(b []byte) error {
-	s.internal = &internalChannel{}
+	id := IDObject{}
+	if err := json.Unmarshal(b, &id); err != nil {
+		return err
+	}
+
+	*s = *objects.registerChannel(&id)
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -262,7 +267,12 @@ func (s *Guild) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON is used to convert json discord objects back into their respective structs
 func (s *Guild) UnmarshalJSON(b []byte) error {
-	s.internal = &internalGuild{}
+	id := IDObject{}
+	if err := json.Unmarshal(b, &id); err != nil {
+		return err
+	}
+
+	*s = *objects.registerGuild(&id)
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -448,7 +458,12 @@ func (s *Message) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON is used to convert json discord objects back into their respective structs
 func (s *Message) UnmarshalJSON(b []byte) error {
-	s.internal = &internalMessage{}
+	id := IDObject{}
+	if err := json.Unmarshal(b, &id); err != nil {
+		return err
+	}
+
+	*s = *objects.registerMessage(&id)
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -589,7 +604,7 @@ func (s *Presence) User() *User {
 }
 
 // Roles is used to export the Roles from this struct.
-func (s *Presence) Roles() []*Role {
+func (s *Presence) Roles() []Snowflake {
 	return s.internal.Roles
 }
 
@@ -655,7 +670,12 @@ func (s *Role) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON is used to convert json discord objects back into their respective structs
 func (s *Role) UnmarshalJSON(b []byte) error {
-	s.internal = &internalRole{}
+	id := IDObject{}
+	if err := json.Unmarshal(b, &id); err != nil {
+		return err
+	}
+
+	*s = *objects.registerRole(&id)
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -713,7 +733,12 @@ func (s *User) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON is used to convert json discord objects back into their respective structs
 func (s *User) UnmarshalJSON(b []byte) error {
-	s.internal = &internalUser{}
+	id := IDObject{}
+	if err := json.Unmarshal(b, &id); err != nil {
+		return err
+	}
+
+	*s = *objects.registerUser(&id)
 	return json.Unmarshal(b, &s.internal)
 }
 
