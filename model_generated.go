@@ -80,7 +80,8 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*s = *objects.registerChannel(&id)
+	registered := objects.registerChannel(&id)
+	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -272,7 +273,8 @@ func (s *Guild) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*s = *objects.registerGuild(&id)
+	registered := objects.registerGuild(&id)
+	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -463,7 +465,8 @@ func (s *Message) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*s = *objects.registerMessage(&id)
+	registered := objects.registerMessage(&id)
+	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -675,7 +678,8 @@ func (s *Role) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*s = *objects.registerRole(&id)
+	registered := objects.registerRole(&id)
+	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
@@ -738,7 +742,8 @@ func (s *User) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*s = *objects.registerUser(&id)
+	registered := objects.registerUser(&id)
+	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 

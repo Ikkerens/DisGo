@@ -104,7 +104,8 @@ func main() {
 					return err
 				}
 
-				*s = *objects.register{{.Exported}}(&id) {{else}}
+				registered := objects.register{{.Exported}}(&id)
+				s.internal = registered.internal {{else}}
 					s.internal = &{{.Name}}{} {{end}}
 				return json.Unmarshal(b, &s.internal)
 			}
