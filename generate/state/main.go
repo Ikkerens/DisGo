@@ -46,7 +46,7 @@ func main() {
 		}
 
 		{{range .}}
-			func (s *state) register{{.}}(id IDer) *{{.}} {
+			func (s *state) register{{.}}(id identifiableObject) *{{.}} {
 				if registered, exists := s.{{. | ToLower}}s[id.ID()]; exists {
 					return registered
 				} else {

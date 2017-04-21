@@ -19,7 +19,7 @@ var objects = &state{
 	roles:    make(map[Snowflake]*Role),
 }
 
-func (s *state) registerUser(id IDer) *User {
+func (s *state) registerUser(id identifiableObject) *User {
 	if registered, exists := s.users[id.ID()]; exists {
 		return registered
 	} else {
@@ -32,7 +32,7 @@ func (s *state) registerUser(id IDer) *User {
 	}
 }
 
-func (s *state) registerGuild(id IDer) *Guild {
+func (s *state) registerGuild(id identifiableObject) *Guild {
 	if registered, exists := s.guilds[id.ID()]; exists {
 		return registered
 	} else {
@@ -45,7 +45,7 @@ func (s *state) registerGuild(id IDer) *Guild {
 	}
 }
 
-func (s *state) registerChannel(id IDer) *Channel {
+func (s *state) registerChannel(id identifiableObject) *Channel {
 	if registered, exists := s.channels[id.ID()]; exists {
 		return registered
 	} else {
@@ -58,7 +58,7 @@ func (s *state) registerChannel(id IDer) *Channel {
 	}
 }
 
-func (s *state) registerMessage(id IDer) *Message {
+func (s *state) registerMessage(id identifiableObject) *Message {
 	if registered, exists := s.messages[id.ID()]; exists {
 		return registered
 	} else {
@@ -71,7 +71,7 @@ func (s *state) registerMessage(id IDer) *Message {
 	}
 }
 
-func (s *state) registerRole(id IDer) *Role {
+func (s *state) registerRole(id identifiableObject) *Role {
 	if registered, exists := s.roles[id.ID()]; exists {
 		return registered
 	} else {

@@ -66,7 +66,7 @@ func (s *UnixTimeStamp) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-type IDer interface {
+type identifiableObject interface {
 	ID() Snowflake
 }
 
