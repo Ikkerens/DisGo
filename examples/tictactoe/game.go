@@ -60,12 +60,14 @@ func (game *ticTacToe) start(channel disgo.Snowflake) disgo.Snowflake {
 		return 0
 	}
 	game.board = board
-
-	for i := 1; i <= 9; i++ {
-		board.AddReaction(strconv.Itoa(i) + string(slotKeyCap))
-	}
-
 	game.expire = time.NewTimer(expireTime * time.Second)
+
+	go func() {
+		for i := 1; i <= 9; i++ {
+			board.AddReaction(strconv.Itoa(i) + string(slotKeyCap))
+		}
+	}()
+
 	go func() {
 		<-game.expire.C
 		game.expired = true
