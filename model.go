@@ -108,6 +108,7 @@ type internalMessage struct {
 	EditedTimestamp time.Time    `json:"edited_timestamp,string,omitempty"`
 	TTS             bool         `json:"tts"`
 	MentionEveryone bool         `json:"mention_everyone"`
+	Mentions        []*User      `json:"mentions"`
 	MentionRoles    []*Role      `json:"mention_roles"`
 	Attachments     []Attachment `json:"attachments"`
 	Embeds          []Embed      `json:"embeds"`
@@ -134,7 +135,7 @@ type internalAttachment struct {
 	ID       Snowflake `json:"id"`
 	Filename string    `json:"filename"`
 	Size     int       `json:"size"`
-	URL      string    `json:"url"`
+	URL      string    `json:"Url"`
 	ProxyURL string    `json:"proxy_url"`
 	Height   int       `json:"height"`
 	Width    int       `json:"width"`
@@ -144,7 +145,7 @@ type Embed struct {
 	Title       string         `json:"title,omitempty"`
 	Type        string         `json:"type,omitempty"`
 	Description string         `json:"description,omitempty"`
-	URL         string         `json:"url,omitempty"`
+	URL         string         `json:"Url,omitempty"`
 	Timestamp   string         `json:"timestamp"`
 	Color       int            `json:"color,omitempty"`
 	Footer      EmbedFooter    `json:"footer,omitempty"`
@@ -157,20 +158,20 @@ type Embed struct {
 }
 
 type EmbedThumbnail struct {
-	URL      string `json:"url"`
+	URL      string `json:"Url"`
 	ProxyURL string `json:"proxy_url,omitempty"`
 	Height   int    `json:"height,omitempty"`
 	Width    int    `json:"width,omitempty"`
 }
 
 type EmbedVideo struct {
-	URL    string `json:"url"`
+	URL    string `json:"Url"`
 	Height int    `json:"height,omitempty"`
 	Width  int    `json:"width,omitempty"`
 }
 
 type EmbedImage struct {
-	URL      string `json:"url"`
+	URL      string `json:"Url"`
 	ProxyURL string `json:"proxy_url,omitempty"`
 	Height   int    `json:"height,omitempty"`
 	Width    int    `json:"width,omitempty"`
@@ -178,12 +179,12 @@ type EmbedImage struct {
 
 type EmbedProvider struct {
 	Name string `json:"name,omitempty"`
-	URL  string `json:"url,omitempty"`
+	URL  string `json:"Url,omitempty"`
 }
 
 type EmbedAuthor struct {
 	Name         string `json:"name,omitempty"`
-	URL          string `json:"url,omitempty"`
+	URL          string `json:"Url,omitempty"`
 	IconURL      string `json:"icon_url,omitempty"`
 	ProxyIconURL string `json:"proxy_icon_url,omitempty"`
 }
@@ -285,5 +286,5 @@ type internalPresence struct {
 type internalGame struct {
 	Name string `json:"name"`
 	Type int    `json:"type"`
-	URL  string `json:"url,omitempty"`
+	URL  string `json:"Url,omitempty"`
 }

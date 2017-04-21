@@ -477,6 +477,11 @@ func (s *Message) MentionEveryone() bool {
 	return s.internal.MentionEveryone
 }
 
+// Mentions is used to export the Mentions from this struct.
+func (s *Message) Mentions() []*User {
+	return s.internal.Mentions
+}
+
 // MentionRoles is used to export the MentionRoles from this struct.
 func (s *Message) MentionRoles() []*Role {
 	return s.internal.MentionRoles

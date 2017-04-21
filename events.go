@@ -113,11 +113,17 @@ type MessageDeleteBulkEvent struct {
 }
 
 type MessageReactionAddEvent struct {
-	*Reaction
+	UserID    Snowflake `json:"user_id"`
+	ChannelID Snowflake `json:"channel_id"`
+	MessageID Snowflake `json:"message_id"`
+	Emoji     *Emoji    `json:"emoji"`
 }
 
 type MessageReactionRemoveEvent struct {
-	*Reaction
+	UserID    Snowflake `json:"user_id"`
+	ChannelID Snowflake `json:"channel_id"`
+	MessageID Snowflake `json:"message_id"`
+	Emoji     *Emoji    `json:"emoji"`
 }
 
 type PresenceUpdateEvent struct {

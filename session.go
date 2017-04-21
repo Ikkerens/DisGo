@@ -33,7 +33,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 	session := &Session{tokenType: "Bot", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
 
 	gateway := gatewayGetResponse{}
-	_, err := session.doRequest("GET", EndPointBotGateway().URL, nil, &gateway)
+	_, err := session.doRequest("GET", EndPointBotGateway().Url, nil, &gateway)
 	if err != nil {
 		return nil, err
 	}

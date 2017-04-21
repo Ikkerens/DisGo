@@ -15,8 +15,9 @@ import (
 )
 
 type EndPoint struct {
-	URL    string
-	Bucket string
+	Url       string
+	bucket    string
+	resetTime int
 }
 
 var (
@@ -30,8 +31,8 @@ var (
 	EndPointMessage            = makeEndPoint("/channels/:channel_id/messages/:message_id")
 	EndPointMessageBulkDelete  = makeEndPoint("/channels/:channel_id/messages/bulk-delete")
 	EndPointReactions          = makeEndPoint("/channels/:channel_id/messages/:mesasge_id/reactions")
-	EndPointReaction           = makeEndPoint("/channels/:channel_id/messages/:mesasge_id/reactions/%s/:user_id")
-	EndPointOwnReaction        = makeEndPoint("/channels/:channel_id/messages/:message_id/reactions/%s/@me")
+	EndPointReaction           = makeEndPoint("/channels/:channel_id/messages/:mesasge_id/reactions/%%s/:user_id")
+	EndPointOwnReaction        = makeEndPoint("/channels/:channel_id/messages/:message_id/reactions/%%s/@me")
 	EndPointChannelPermissions = makeEndPoint("/channels/:channel_id/permissions/:overwrite_id")
 	EndPointChannelInvites     = makeEndPoint("/channels/:channel_id/invites")
 	EndPointChannelTyping      = makeEndPoint("/channels/:channel_id/typing")
@@ -60,6 +61,7 @@ var (
 
 	EndPointOwnUser    = makeEndPoint("/users/@me")
 	EndPointUser       = makeEndPoint("/users/:user_id")
+	EndPointUserAvatar = BaseUrl + "/users/%d/avatars/%s.jpg"
 	EndPointOwnGuilds  = makeEndPoint("/users/@me/guilds")
 	EndPointOwnGuild   = makeEndPoint("/users/@me/guilds/:guild_id")
 	EndPointDMChannels = makeEndPoint("/users/@me/channels")
@@ -96,6 +98,9 @@ func makeEndPoint(path string) func(ids ...Snowflake) EndPoint {
 					// Otherwise, generalize it with a simple zero, an ID that *should* never occur
 					bucketID += "/0"
 				}
+			} else if part == "@me" {
+				endPoint += "/" + part
+				bucketID += "/0"
 			} else {
 				// And well, if we're not dealing with a variable, just append it
 				extension := "/" + part
@@ -111,21 +116,28 @@ func makeEndPoint(path string) func(ids ...Snowflake) EndPoint {
 			snowflakes[i] = snowflake
 		}
 
-		// But only the rest api functions themselves should decide whether they need the bucket ID or the url
-		return EndPoint{fmt.Sprintf(endPoint, endPointIDs...), fmt.Sprintf(bucketID, bucketIDs...)}
+		// But only the rest api functions themselves should decide whether they need the bucket ID or the Url
+		return EndPoint{fmt.Sprintf(endPoint, endPointIDs...), fmt.Sprintf(bucketID, bucketIDs...), -1}
 	}
 }
 
 func (s *Session) doHttpGet(endPoint EndPoint, target interface{}) (err error) {
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
-		return s.doRequest("GET", endPoint.URL, nil, target)
+		return s.doRequest("GET", endPoint.Url, nil, target)
 	})
 	return
 }
 
 func (s *Session) doHttpDelete(endPoint EndPoint, target interface{}) (err error) {
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
-		return s.doRequest("DELETE", endPoint.URL, nil, target)
+		return s.doRequest("DELETE", endPoint.Url, nil, target)
+	})
+	return
+}
+
+func (s *Session) doHttpPut(endPoint EndPoint, target interface{}) (err error) {
+	err = s.rateLimit(endPoint, func() (*http.Response, error) {
+		return s.doRequest("PUT", endPoint.Url, nil, target)
 	})
 	return
 }
@@ -136,7 +148,20 @@ func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err e
 	if err == nil {
 		byteBuf := bytes.NewReader(jsonBody)
 		err = s.rateLimit(endPoint, func() (*http.Response, error) {
-			return s.doRequest("POST", endPoint.URL, byteBuf, target)
+			return s.doRequest("POST", endPoint.Url, byteBuf, target)
+		})
+	}
+
+	return
+}
+
+func (s *Session) doHttpPatch(endPoint EndPoint, body, target interface{}) (err error) {
+	jsonBody, err := json.Marshal(body)
+
+	if err == nil {
+		byteBuf := bytes.NewReader(jsonBody)
+		err = s.rateLimit(endPoint, func() (*http.Response, error) {
+			return s.doRequest("PATCH", endPoint.Url, byteBuf, target)
 		})
 	}
 

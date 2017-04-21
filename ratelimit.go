@@ -19,10 +19,10 @@ type rateBucket struct {
 
 func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, error)) error {
 	// Get the bucket, and if it does not exist, create it.
-	bucket, exists := s.rateLimitBuckets[endPoint.Bucket]
+	bucket, exists := s.rateLimitBuckets[endPoint.bucket]
 	if !exists {
 		bucket = &rateBucket{remaining: 1}
-		s.rateLimitBuckets[endPoint.Bucket] = bucket
+		s.rateLimitBuckets[endPoint.bucket] = bucket
 	}
 
 	// Lock this bucket
@@ -32,7 +32,7 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	// Wait for the bucket to expire if we're out of attempts
 	now := time.Now()
 	if bucket.remaining == 0 && bucket.reset.After(now) {
-		logger.Warnf("We are out of slots for %s, waiting...", endPoint.Bucket)
+		logger.Warnf("We are out of slots for %s, waiting...", endPoint.bucket)
 		time.Sleep(bucket.reset.Sub(now))
 	}
 
@@ -76,14 +76,12 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 			logger.Error("We are being globally ratelimited!")
 			s.globalReset = resetTime
 		} else {
-			logger.Errorf("We are being ratelimited on %s!", endPoint.Bucket)
+			logger.Errorf("We are being ratelimited on %s!", endPoint.bucket)
 			bucket.reset = resetTime
 			bucket.remaining = 0
 		}
 
 		// Automatically queue a retry, but this one will wait for the timers to expire
-		bucket.mutex.Unlock()
-		s.globalRateLimit.Unlock()
 		return s.rateLimit(endPoint, call)
 	}
 
@@ -95,12 +93,16 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	if headerLimit != "" {
 		bucket.limit, parseError = strconv.Atoi(headerLimit)
 	}
-	if headerReset != "" {
-		var unix int64
-		unix, parseError = strconv.ParseInt(headerReset, 10, 64)
-		if parseError == nil {
-			bucket.reset = time.Unix(unix, 0)
+	if endPoint.resetTime == -1 {
+		if headerReset != "" {
+			var unix int64
+			unix, parseError = strconv.ParseInt(headerReset, 10, 64)
+			if parseError == nil {
+				bucket.reset = time.Unix(unix, 0)
+			}
 		}
+	} else {
+		bucket.reset = now.Add(time.Duration(endPoint.resetTime) * time.Millisecond)
 	}
 
 	// Check for errors

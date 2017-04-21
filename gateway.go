@@ -20,7 +20,7 @@ const (
 )
 
 type gatewayGetResponse struct {
-	Url    string `json:"url"`
+	Url    string `json:"Url"`
 	Shards int    `json:"shards,omitempty"`
 }
 

@@ -11,27 +11,28 @@ import (
 func allocateEvent(eventName string) *Event {
 	var event Event
 
+	// Because encoding/json doesn't initialise embbeded struct pointers properly, we'll also initialise them here
 	switch eventName {
 	case "CHANNEL_CREATE":
-		event = &ChannelCreateEvent{}
+		event = &ChannelCreateEvent{Channel: &Channel{}}
 	case "CHANNEL_DELETE":
-		event = &ChannelDeleteEvent{}
+		event = &ChannelDeleteEvent{Channel: &Channel{}}
 	case "CHANNEL_UPDATE":
-		event = &ChannelUpdateEvent{}
+		event = &ChannelUpdateEvent{Channel: &Channel{}}
 	case "GUILD_BAN_ADD":
-		event = &GuildBanAddEvent{}
+		event = &GuildBanAddEvent{User: &User{}}
 	case "GUILD_BAN_REMOVE":
-		event = &GuildBanRemoveEvent{}
+		event = &GuildBanRemoveEvent{User: &User{}}
 	case "GUILD_CREATE":
-		event = &GuildCreateEvent{}
+		event = &GuildCreateEvent{Guild: &Guild{}}
 	case "GUILD_DELETE":
-		event = &GuildDeleteEvent{}
+		event = &GuildDeleteEvent{Guild: &Guild{}}
 	case "GUILD_EMOJIS_UPDATE":
 		event = &GuildEmojisUpdateEvent{}
 	case "GUILD_INTEGRATIONS_UPDATE":
 		event = &GuildIntegrationsUpdateEvent{}
 	case "GUILD_MEMBER_ADD":
-		event = &GuildMemberAddEvent{}
+		event = &GuildMemberAddEvent{GuildMember: &GuildMember{}}
 	case "GUILD_MEMBER_REMOVE":
 		event = &GuildMemberRemoveEvent{}
 	case "GUILD_MEMBER_UPDATE":
@@ -45,9 +46,9 @@ func allocateEvent(eventName string) *Event {
 	case "GUILD_ROLE_UPDATE":
 		event = &GuildRoleUpdateEvent{}
 	case "GUILD_UPDATE":
-		event = &GuildUpdateEvent{}
+		event = &GuildUpdateEvent{Guild: &Guild{}}
 	case "MESSAGE_CREATE":
-		event = &MessageCreateEvent{}
+		event = &MessageCreateEvent{Message: &Message{}}
 	case "MESSAGE_DELETE_BULK":
 		event = &MessageDeleteBulkEvent{}
 	case "MESSAGE_DELETE":
@@ -57,9 +58,9 @@ func allocateEvent(eventName string) *Event {
 	case "MESSAGE_REACTION_REMOVE":
 		event = &MessageReactionRemoveEvent{}
 	case "MESSAGE_UPDATE":
-		event = &MessageUpdateEvent{}
+		event = &MessageUpdateEvent{Message: &Message{}}
 	case "PRESENCE_UPDATE":
-		event = &PresenceUpdateEvent{}
+		event = &PresenceUpdateEvent{Presence: &Presence{}}
 	case "READY":
 		event = &ReadyEvent{}
 	case "RESUMED":
@@ -67,7 +68,7 @@ func allocateEvent(eventName string) *Event {
 	case "TYPING_START":
 		event = &TypingStartEvent{}
 	case "USER_UPDATE":
-		event = &UserUpdateEvent{}
+		event = &UserUpdateEvent{User: &User{}}
 	default:
 		logger.Errorf("Event with name '%s' was dispatched by Discord, but we don't know this event. (DisGo outdated?)", eventName)
 		return nil
@@ -84,24 +85,12 @@ func (e *ChannelCreateEvent) setSession(s *Session) {
 	e.Channel.session = s
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *ChannelCreateEvent) UnmarshalJSON(b []byte) error {
-	e.Channel = &Channel{}
-	return json.Unmarshal(b, &e.Channel)
-}
-
 func (*ChannelDeleteEvent) eventName() string {
 	return "CHANNEL_DELETE"
 }
 
 func (e *ChannelDeleteEvent) setSession(s *Session) {
 	e.Channel.session = s
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *ChannelDeleteEvent) UnmarshalJSON(b []byte) error {
-	e.Channel = &Channel{}
-	return json.Unmarshal(b, &e.Channel)
 }
 
 func (*ChannelUpdateEvent) eventName() string {
@@ -112,27 +101,12 @@ func (e *ChannelUpdateEvent) setSession(s *Session) {
 	e.Channel.session = s
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *ChannelUpdateEvent) UnmarshalJSON(b []byte) error {
-	e.Channel = &Channel{}
-	return json.Unmarshal(b, &e.Channel)
-}
-
 func (*GuildBanAddEvent) eventName() string {
 	return "GUILD_BAN_ADD"
 }
 
 func (e *GuildBanAddEvent) setSession(s *Session) {
 	e.User.session = s
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *GuildBanAddEvent) UnmarshalJSON(b []byte) error {
-	e.User = &User{}
-	if err := json.Unmarshal(b, e); err != nil {
-		return err
-	}
-	return json.Unmarshal(b, &e.User)
 }
 
 func (*GuildBanRemoveEvent) eventName() string {
@@ -143,15 +117,6 @@ func (e *GuildBanRemoveEvent) setSession(s *Session) {
 	e.User.session = s
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *GuildBanRemoveEvent) UnmarshalJSON(b []byte) error {
-	e.User = &User{}
-	if err := json.Unmarshal(b, e); err != nil {
-		return err
-	}
-	return json.Unmarshal(b, &e.User)
-}
-
 func (*GuildCreateEvent) eventName() string {
 	return "GUILD_CREATE"
 }
@@ -160,24 +125,12 @@ func (e *GuildCreateEvent) setSession(s *Session) {
 	e.Guild.session = s
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *GuildCreateEvent) UnmarshalJSON(b []byte) error {
-	e.Guild = &Guild{}
-	return json.Unmarshal(b, &e.Guild)
-}
-
 func (*GuildDeleteEvent) eventName() string {
 	return "GUILD_DELETE"
 }
 
 func (e *GuildDeleteEvent) setSession(s *Session) {
 	e.Guild.session = s
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *GuildDeleteEvent) UnmarshalJSON(b []byte) error {
-	e.Guild = &Guild{}
-	return json.Unmarshal(b, &e.Guild)
 }
 
 func (*GuildEmojisUpdateEvent) eventName() string {
@@ -200,15 +153,6 @@ func (*GuildMemberAddEvent) eventName() string {
 
 func (e *GuildMemberAddEvent) setSession(s *Session) {
 	e.GuildMember.session = s
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *GuildMemberAddEvent) UnmarshalJSON(b []byte) error {
-	e.GuildMember = &GuildMember{}
-	if err := json.Unmarshal(b, e); err != nil {
-		return err
-	}
-	return json.Unmarshal(b, &e.GuildMember)
 }
 
 func (*GuildMemberRemoveEvent) eventName() string {
@@ -265,24 +209,12 @@ func (e *GuildUpdateEvent) setSession(s *Session) {
 	e.Guild.session = s
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *GuildUpdateEvent) UnmarshalJSON(b []byte) error {
-	e.Guild = &Guild{}
-	return json.Unmarshal(b, &e.Guild)
-}
-
 func (*MessageCreateEvent) eventName() string {
 	return "MESSAGE_CREATE"
 }
 
 func (e *MessageCreateEvent) setSession(s *Session) {
 	e.Message.session = s
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *MessageCreateEvent) UnmarshalJSON(b []byte) error {
-	e.Message = &Message{}
-	return json.Unmarshal(b, &e.Message)
 }
 
 func (*MessageDeleteBulkEvent) eventName() string {
@@ -306,23 +238,11 @@ func (*MessageReactionAddEvent) eventName() string {
 func (e *MessageReactionAddEvent) setSession(s *Session) {
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *MessageReactionAddEvent) UnmarshalJSON(b []byte) error {
-	e.Reaction = &Reaction{}
-	return json.Unmarshal(b, &e.Reaction)
-}
-
 func (*MessageReactionRemoveEvent) eventName() string {
 	return "MESSAGE_REACTION_REMOVE"
 }
 
 func (e *MessageReactionRemoveEvent) setSession(s *Session) {
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *MessageReactionRemoveEvent) UnmarshalJSON(b []byte) error {
-	e.Reaction = &Reaction{}
-	return json.Unmarshal(b, &e.Reaction)
 }
 
 func (*MessageUpdateEvent) eventName() string {
@@ -333,23 +253,11 @@ func (e *MessageUpdateEvent) setSession(s *Session) {
 	e.Message.session = s
 }
 
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *MessageUpdateEvent) UnmarshalJSON(b []byte) error {
-	e.Message = &Message{}
-	return json.Unmarshal(b, &e.Message)
-}
-
 func (*PresenceUpdateEvent) eventName() string {
 	return "PRESENCE_UPDATE"
 }
 
 func (e *PresenceUpdateEvent) setSession(s *Session) {
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *PresenceUpdateEvent) UnmarshalJSON(b []byte) error {
-	e.Presence = &Presence{}
-	return json.Unmarshal(b, &e.Presence)
 }
 
 func (*ReadyEvent) eventName() string {
@@ -383,10 +291,4 @@ func (*UserUpdateEvent) eventName() string {
 
 func (e *UserUpdateEvent) setSession(s *Session) {
 	e.User.session = s
-}
-
-// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
-func (e *UserUpdateEvent) UnmarshalJSON(b []byte) error {
-	e.User = &User{}
-	return json.Unmarshal(b, &e.User)
 }
