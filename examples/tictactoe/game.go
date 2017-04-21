@@ -14,6 +14,8 @@ import (
 )
 
 const (
+	expireTime = 60
+
 	slotKeyCap = '\U000020e3'
 	slotCircle = '\U0001f534'
 	slotCross  = '\U0000274e'
@@ -63,7 +65,7 @@ func (game *ticTacToe) start(channel disgo.Snowflake) disgo.Snowflake {
 		board.AddReaction(strconv.Itoa(i) + string(slotKeyCap))
 	}
 
-	game.expire = time.NewTimer(30 * time.Second)
+	game.expire = time.NewTimer(expireTime * time.Second)
 	go func() {
 		<-game.expire.C
 		game.expired = true
@@ -87,7 +89,7 @@ func (game *ticTacToe) addReaction(user disgo.Snowflake, emoji string) {
 		}
 
 		if slot >= 1 && slot <= 9 && game.slots[slot-1] == 0 {
-			game.expire.Reset(10 * time.Second)
+			game.expire.Reset(expireTime * time.Second)
 			game.slots[slot-1] = piece
 			game.turn = !game.turn
 
