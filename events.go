@@ -112,6 +112,14 @@ type MessageDeleteBulkEvent struct {
 	ChannelID Snowflake   `json:"channel_id"`
 }
 
+type MessageReactionAddEvent struct {
+	*Reaction
+}
+
+type MessageReactionRemoveEvent struct {
+	*Reaction
+}
+
 type PresenceUpdateEvent struct {
 	*Presence
 }

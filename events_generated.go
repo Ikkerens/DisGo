@@ -52,6 +52,10 @@ func allocateEvent(eventName string) *Event {
 		event = &MessageDeleteBulkEvent{}
 	case "MESSAGE_DELETE":
 		event = &MessageDeleteEvent{}
+	case "MESSAGE_REACTION_ADD":
+		event = &MessageReactionAddEvent{}
+	case "MESSAGE_REACTION_REMOVE":
+		event = &MessageReactionRemoveEvent{}
 	case "MESSAGE_UPDATE":
 		event = &MessageUpdateEvent{}
 	case "PRESENCE_UPDATE":
@@ -293,6 +297,32 @@ func (*MessageDeleteEvent) eventName() string {
 }
 
 func (e *MessageDeleteEvent) setSession(s *Session) {
+}
+
+func (*MessageReactionAddEvent) eventName() string {
+	return "MESSAGE_REACTION_ADD"
+}
+
+func (e *MessageReactionAddEvent) setSession(s *Session) {
+}
+
+// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
+func (e *MessageReactionAddEvent) UnmarshalJSON(b []byte) error {
+	e.Reaction = &Reaction{}
+	return json.Unmarshal(b, &e.Reaction)
+}
+
+func (*MessageReactionRemoveEvent) eventName() string {
+	return "MESSAGE_REACTION_REMOVE"
+}
+
+func (e *MessageReactionRemoveEvent) setSession(s *Session) {
+}
+
+// UnmarshalJSON is used to make sure the embedded object of this event is Unmarshalled, not the event itself
+func (e *MessageReactionRemoveEvent) UnmarshalJSON(b []byte) error {
+	e.Reaction = &Reaction{}
+	return json.Unmarshal(b, &e.Reaction)
 }
 
 func (*MessageUpdateEvent) eventName() string {
