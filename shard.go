@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -28,6 +29,7 @@ type shard struct {
 	closeMessage chan int
 	stopListen   chan bool
 	stopRead     chan bool
+	writeLock    sync.Mutex
 }
 
 func connectShard(session *Session, shardNum int) (*shard, error) {
@@ -238,6 +240,9 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 }
 
 func (s *shard) reconnect() {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+
 	if !s.session.shuttingDown {
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
 		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
@@ -245,6 +250,11 @@ func (s *shard) reconnect() {
 		if err == nil {
 			s.webSocket = conn
 			err = s.handshake()
+
+			if err != nil {
+				conn.Close()
+				s.webSocket = nil
+			}
 		}
 
 		if err != nil {
@@ -263,6 +273,9 @@ func (s *shard) onClose(code int, text string) error {
 }
 
 func (s *shard) disconnect(code int, text string) {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
@@ -281,5 +294,5 @@ func (s *shard) disconnect(code int, text string) {
 	s.webSocket.Close()
 	s.stopRead <- true
 
-	s.reconnect()
+	go s.reconnect()
 }
