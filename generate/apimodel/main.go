@@ -19,7 +19,6 @@ import (
 )
 
 type internalField struct {
-	Parent  *internalType
 	Name    string
 	TypeStr string
 }
@@ -59,9 +58,9 @@ func main() {
 						continue
 					}
 
-					iField := internalField{&typeDef, field.Names[0].Name, typeStr}
+					iField := internalField{field.Names[0].Name, typeStr}
 					typeDef.Fields = append(typeDef.Fields, iField)
-					logger.Infof("Adding func %s() with return type %s to %s.", iField.Name, iField.TypeStr, iField.Parent.Exported)
+					logger.Infof("Adding func %s() with return type %s to %s.", iField.Name, iField.TypeStr, typeDef.Exported)
 				}
 
 				types = append(types, typeDef)
@@ -82,6 +81,7 @@ func main() {
 		import (
 			"encoding/json"
 			"time"
+			"sync"
 		)
 
 		{{range .}}
@@ -89,7 +89,9 @@ func main() {
 			// Any fields can be obtained by calling the respective getters.
 			type {{.Exported}} struct {
 				session *Session
-				internal *{{.Name}}
+				internal *{{.Name}} {{if .StateType}}
+
+				lock *sync.RWMutex {{end}}
 			}
 
 			// MarshalJSON is used to convert this object into its json representation for Discord
@@ -105,14 +107,22 @@ func main() {
 				}
 
 				registered := objects.register{{.Exported}}(&id)
+				registered.lock.Lock()
+				defer registered.lock.Unlock()
+
+				s.lock = registered.lock
 				s.internal = registered.internal {{else}}
 					s.internal = &{{.Name}}{} {{end}}
 				return json.Unmarshal(b, &s.internal)
 			}
 
+			{{$p := .}}
 			{{range .Fields}}
 				// {{ .Name}} is used to export the {{.Name}} from this struct.
-				func (s *{{.Parent.Exported}}) {{.Name}}() {{.TypeStr}} {
+				func (s *{{$p.Exported}}) {{.Name}}() {{.TypeStr}} { {{if $p.StateType}}
+					s.lock.RLock()
+					defer s.lock.RUnlock()
+					{{end}}
 					return s.internal.{{.Name}}
 				}
 			{{end}}

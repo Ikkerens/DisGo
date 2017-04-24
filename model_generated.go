@@ -5,6 +5,7 @@ package disgo
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 )
 
@@ -66,6 +67,8 @@ func (s *Attachment) Width() int {
 type Channel struct {
 	session  *Session
 	internal *internalChannel
+
+	lock *sync.RWMutex
 }
 
 // MarshalJSON is used to convert this object into its json representation for Discord
@@ -81,67 +84,107 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 	}
 
 	registered := objects.registerChannel(&id)
+	registered.lock.Lock()
+	defer registered.lock.Unlock()
+
+	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
 // ID is used to export the ID from this struct.
 func (s *Channel) ID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.ID
 }
 
 // GuildID is used to export the GuildID from this struct.
 func (s *Channel) GuildID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.GuildID
 }
 
 // Name is used to export the Name from this struct.
 func (s *Channel) Name() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Name
 }
 
 // Type is used to export the Type from this struct.
 func (s *Channel) Type() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Type
 }
 
 // Position is used to export the Position from this struct.
 func (s *Channel) Position() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Position
 }
 
 // IsPrivate is used to export the IsPrivate from this struct.
 func (s *Channel) IsPrivate() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.IsPrivate
 }
 
 // PermissionOverwrites is used to export the PermissionOverwrites from this struct.
 func (s *Channel) PermissionOverwrites() []Overwrite {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.PermissionOverwrites
 }
 
 // Topic is used to export the Topic from this struct.
 func (s *Channel) Topic() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Topic
 }
 
 // LastMessageID is used to export the LastMessageID from this struct.
 func (s *Channel) LastMessageID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.LastMessageID
 }
 
 // Bitrate is used to export the Bitrate from this struct.
 func (s *Channel) Bitrate() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Bitrate
 }
 
 // UserLimit is used to export the UserLimit from this struct.
 func (s *Channel) UserLimit() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.UserLimit
 }
 
 // Recipient is used to export the Recipient from this struct.
 func (s *Channel) Recipient() *User {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Recipient
 }
 
@@ -226,6 +269,8 @@ func (s *Game) URL() string {
 type Guild struct {
 	session  *Session
 	internal *internalGuild
+
+	lock *sync.RWMutex
 }
 
 // MarshalJSON is used to convert this object into its json representation for Discord
@@ -241,127 +286,203 @@ func (s *Guild) UnmarshalJSON(b []byte) error {
 	}
 
 	registered := objects.registerGuild(&id)
+	registered.lock.Lock()
+	defer registered.lock.Unlock()
+
+	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
 // ID is used to export the ID from this struct.
 func (s *Guild) ID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.ID
 }
 
 // Name is used to export the Name from this struct.
 func (s *Guild) Name() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Name
 }
 
 // IconHash is used to export the IconHash from this struct.
 func (s *Guild) IconHash() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.IconHash
 }
 
 // SplashHash is used to export the SplashHash from this struct.
 func (s *Guild) SplashHash() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.SplashHash
 }
 
 // OwnerID is used to export the OwnerID from this struct.
 func (s *Guild) OwnerID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.OwnerID
 }
 
 // Region is used to export the Region from this struct.
 func (s *Guild) Region() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Region
 }
 
 // AFKChannelID is used to export the AFKChannelID from this struct.
 func (s *Guild) AFKChannelID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.AFKChannelID
 }
 
 // AFKTimeout is used to export the AFKTimeout from this struct.
 func (s *Guild) AFKTimeout() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.AFKTimeout
 }
 
 // EmbedEnabled is used to export the EmbedEnabled from this struct.
 func (s *Guild) EmbedEnabled() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.EmbedEnabled
 }
 
 // EmbedChannelID is used to export the EmbedChannelID from this struct.
 func (s *Guild) EmbedChannelID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.EmbedChannelID
 }
 
 // VerificationLevel is used to export the VerificationLevel from this struct.
 func (s *Guild) VerificationLevel() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.VerificationLevel
 }
 
 // DefaultMessageNotifications is used to export the DefaultMessageNotifications from this struct.
 func (s *Guild) DefaultMessageNotifications() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.DefaultMessageNotifications
 }
 
 // Roles is used to export the Roles from this struct.
 func (s *Guild) Roles() []*Role {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Roles
 }
 
 // Emojis is used to export the Emojis from this struct.
 func (s *Guild) Emojis() []Emoji {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Emojis
 }
 
 // Features is used to export the Features from this struct.
 func (s *Guild) Features() []json.RawMessage {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Features
 }
 
 // MFALevel is used to export the MFALevel from this struct.
 func (s *Guild) MFALevel() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.MFALevel
 }
 
 // JoinedAt is used to export the JoinedAt from this struct.
 func (s *Guild) JoinedAt() time.Time {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.JoinedAt
 }
 
 // Large is used to export the Large from this struct.
 func (s *Guild) Large() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Large
 }
 
 // Unavailable is used to export the Unavailable from this struct.
 func (s *Guild) Unavailable() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Unavailable
 }
 
 // MemberCount is used to export the MemberCount from this struct.
 func (s *Guild) MemberCount() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.MemberCount
 }
 
 // VoiceStates is used to export the VoiceStates from this struct.
 func (s *Guild) VoiceStates() []json.RawMessage {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.VoiceStates
 }
 
 // Members is used to export the Members from this struct.
 func (s *Guild) Members() []GuildMember {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Members
 }
 
 // Channels is used to export the Channels from this struct.
 func (s *Guild) Channels() []*Channel {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Channels
 }
 
 // Presences is used to export the Presences from this struct.
 func (s *Guild) Presences() []Presence {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Presences
 }
 
@@ -418,6 +539,8 @@ func (s *GuildMember) Mute() bool {
 type Message struct {
 	session  *Session
 	internal *internalMessage
+
+	lock *sync.RWMutex
 }
 
 // MarshalJSON is used to convert this object into its json representation for Discord
@@ -433,87 +556,139 @@ func (s *Message) UnmarshalJSON(b []byte) error {
 	}
 
 	registered := objects.registerMessage(&id)
+	registered.lock.Lock()
+	defer registered.lock.Unlock()
+
+	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
 // ID is used to export the ID from this struct.
 func (s *Message) ID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.ID
 }
 
 // ChannelID is used to export the ChannelID from this struct.
 func (s *Message) ChannelID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.ChannelID
 }
 
 // Author is used to export the Author from this struct.
 func (s *Message) Author() *User {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Author
 }
 
 // Content is used to export the Content from this struct.
 func (s *Message) Content() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Content
 }
 
 // Timestamp is used to export the Timestamp from this struct.
 func (s *Message) Timestamp() time.Time {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Timestamp
 }
 
 // EditedTimestamp is used to export the EditedTimestamp from this struct.
 func (s *Message) EditedTimestamp() time.Time {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.EditedTimestamp
 }
 
 // TTS is used to export the TTS from this struct.
 func (s *Message) TTS() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.TTS
 }
 
 // MentionEveryone is used to export the MentionEveryone from this struct.
 func (s *Message) MentionEveryone() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.MentionEveryone
 }
 
 // Mentions is used to export the Mentions from this struct.
 func (s *Message) Mentions() []*User {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Mentions
 }
 
 // MentionRoles is used to export the MentionRoles from this struct.
 func (s *Message) MentionRoles() []*Role {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.MentionRoles
 }
 
 // Attachments is used to export the Attachments from this struct.
 func (s *Message) Attachments() []Attachment {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Attachments
 }
 
 // Embeds is used to export the Embeds from this struct.
 func (s *Message) Embeds() []Embed {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Embeds
 }
 
 // Reactions is used to export the Reactions from this struct.
 func (s *Message) Reactions() []Reaction {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Reactions
 }
 
 // NOnce is used to export the NOnce from this struct.
 func (s *Message) NOnce() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.NOnce
 }
 
 // Pinned is used to export the Pinned from this struct.
 func (s *Message) Pinned() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Pinned
 }
 
 // WebhookID is used to export the WebhookID from this struct.
 func (s *Message) WebhookID() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.WebhookID
 }
 
@@ -636,6 +811,8 @@ func (s *Reaction) Emoji() *Emoji {
 type Role struct {
 	session  *Session
 	internal *internalRole
+
+	lock *sync.RWMutex
 }
 
 // MarshalJSON is used to convert this object into its json representation for Discord
@@ -651,47 +828,75 @@ func (s *Role) UnmarshalJSON(b []byte) error {
 	}
 
 	registered := objects.registerRole(&id)
+	registered.lock.Lock()
+	defer registered.lock.Unlock()
+
+	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
 // ID is used to export the ID from this struct.
 func (s *Role) ID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.ID
 }
 
 // Name is used to export the Name from this struct.
 func (s *Role) Name() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Name
 }
 
 // Color is used to export the Color from this struct.
 func (s *Role) Color() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Color
 }
 
 // Hoist is used to export the Hoist from this struct.
 func (s *Role) Hoist() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Hoist
 }
 
 // Position is used to export the Position from this struct.
 func (s *Role) Position() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Position
 }
 
 // Permissions is used to export the Permissions from this struct.
 func (s *Role) Permissions() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Permissions
 }
 
 // Managed is used to export the Managed from this struct.
 func (s *Role) Managed() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Managed
 }
 
 // Mentionable is used to export the Mentionable from this struct.
 func (s *Role) Mentionable() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Mentionable
 }
 
@@ -700,6 +905,8 @@ func (s *Role) Mentionable() bool {
 type User struct {
 	session  *Session
 	internal *internalUser
+
+	lock *sync.RWMutex
 }
 
 // MarshalJSON is used to convert this object into its json representation for Discord
@@ -715,46 +922,74 @@ func (s *User) UnmarshalJSON(b []byte) error {
 	}
 
 	registered := objects.registerUser(&id)
+	registered.lock.Lock()
+	defer registered.lock.Unlock()
+
+	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
 }
 
 // ID is used to export the ID from this struct.
 func (s *User) ID() Snowflake {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.ID
 }
 
 // Username is used to export the Username from this struct.
 func (s *User) Username() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Username
 }
 
 // Discriminator is used to export the Discriminator from this struct.
 func (s *User) Discriminator() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Discriminator
 }
 
 // AvatarHash is used to export the AvatarHash from this struct.
 func (s *User) AvatarHash() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.AvatarHash
 }
 
 // Bot is used to export the Bot from this struct.
 func (s *User) Bot() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Bot
 }
 
 // MFAEnabled is used to export the MFAEnabled from this struct.
 func (s *User) MFAEnabled() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.MFAEnabled
 }
 
 // Verified is used to export the Verified from this struct.
 func (s *User) Verified() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.Verified
 }
 
 // EMail is used to export the EMail from this struct.
 func (s *User) EMail() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.internal.EMail
 }
