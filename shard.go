@@ -29,7 +29,7 @@ type shard struct {
 	closeMessage chan int
 	stopListen   chan bool
 	stopRead     chan bool
-	writeLock    sync.Mutex
+	lock         sync.RWMutex
 }
 
 func connectShard(session *Session, shardNum int) (*shard, error) {
@@ -174,6 +174,9 @@ func (s *shard) mainLoop() {
 }
 
 func (s *shard) sendFrame(frame *gatewayFrame) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
 }
@@ -207,6 +210,9 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 }
 
 func (s *shard) readFrame() (*receivedFrame, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	logger.Tracef("Shard.readFrame() called")
 	msgType, msg, err := s.webSocket.ReadMessage()
 	if err != nil {
@@ -240,8 +246,8 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 }
 
 func (s *shard) reconnect() {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
 	if !s.session.shuttingDown {
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
@@ -273,8 +279,8 @@ func (s *shard) onClose(code int, text string) error {
 }
 
 func (s *shard) disconnect(code int, text string) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
