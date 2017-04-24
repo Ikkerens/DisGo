@@ -51,14 +51,14 @@ func main() {
 			func (s *state) register{{.}}(id identifiableObject) *{{.}} {
 				if registered, exists := s.{{. | ToLower}}s[id.ID()]; exists {
 					return registered
-				} else {
-					{{. | ToLower}}, typeOk := id.(*{{.}})
-					if !typeOk {
-						{{. | ToLower}} = &{{.}}{internal: &internal{{.}}{}, lock: new(sync.RWMutex)}
-					}
-					s.{{. | ToLower}}s[id.ID()] = {{. | ToLower}}
-					return {{. | ToLower}}
 				}
+
+				{{. | ToLower}}, typeOk := id.(*{{.}})
+				if !typeOk {
+					{{. | ToLower}} = &{{.}}{internal: &internal{{.}}{}, lock: new(sync.RWMutex)}
+				}
+				s.{{. | ToLower}}s[id.ID()] = {{. | ToLower}}
+				return {{. | ToLower}}
 			}
 		{{end}}
 	`))

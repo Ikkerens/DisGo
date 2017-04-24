@@ -43,8 +43,8 @@ func onReady(_ *disgo.Session, event disgo.ReadyEvent) {
 func onMessage(discord *disgo.Session, event disgo.MessageCreateEvent) {
 	if len(event.Mentions()) == 2 {
 		var (
-			valid      bool        = false
-			challenged *disgo.User = nil
+			valid      bool
+			challenged *disgo.User
 		)
 
 		for _, mention := range event.Mentions() {

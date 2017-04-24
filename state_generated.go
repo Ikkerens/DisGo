@@ -24,64 +24,64 @@ var objects = &state{
 func (s *state) registerUser(id identifiableObject) *User {
 	if registered, exists := s.users[id.ID()]; exists {
 		return registered
-	} else {
-		user, typeOk := id.(*User)
-		if !typeOk {
-			user = &User{internal: &internalUser{}, lock: new(sync.RWMutex)}
-		}
-		s.users[id.ID()] = user
-		return user
 	}
+
+	user, typeOk := id.(*User)
+	if !typeOk {
+		user = &User{internal: &internalUser{}, lock: new(sync.RWMutex)}
+	}
+	s.users[id.ID()] = user
+	return user
 }
 
 func (s *state) registerGuild(id identifiableObject) *Guild {
 	if registered, exists := s.guilds[id.ID()]; exists {
 		return registered
-	} else {
-		guild, typeOk := id.(*Guild)
-		if !typeOk {
-			guild = &Guild{internal: &internalGuild{}, lock: new(sync.RWMutex)}
-		}
-		s.guilds[id.ID()] = guild
-		return guild
 	}
+
+	guild, typeOk := id.(*Guild)
+	if !typeOk {
+		guild = &Guild{internal: &internalGuild{}, lock: new(sync.RWMutex)}
+	}
+	s.guilds[id.ID()] = guild
+	return guild
 }
 
 func (s *state) registerChannel(id identifiableObject) *Channel {
 	if registered, exists := s.channels[id.ID()]; exists {
 		return registered
-	} else {
-		channel, typeOk := id.(*Channel)
-		if !typeOk {
-			channel = &Channel{internal: &internalChannel{}, lock: new(sync.RWMutex)}
-		}
-		s.channels[id.ID()] = channel
-		return channel
 	}
+
+	channel, typeOk := id.(*Channel)
+	if !typeOk {
+		channel = &Channel{internal: &internalChannel{}, lock: new(sync.RWMutex)}
+	}
+	s.channels[id.ID()] = channel
+	return channel
 }
 
 func (s *state) registerMessage(id identifiableObject) *Message {
 	if registered, exists := s.messages[id.ID()]; exists {
 		return registered
-	} else {
-		message, typeOk := id.(*Message)
-		if !typeOk {
-			message = &Message{internal: &internalMessage{}, lock: new(sync.RWMutex)}
-		}
-		s.messages[id.ID()] = message
-		return message
 	}
+
+	message, typeOk := id.(*Message)
+	if !typeOk {
+		message = &Message{internal: &internalMessage{}, lock: new(sync.RWMutex)}
+	}
+	s.messages[id.ID()] = message
+	return message
 }
 
 func (s *state) registerRole(id identifiableObject) *Role {
 	if registered, exists := s.roles[id.ID()]; exists {
 		return registered
-	} else {
-		role, typeOk := id.(*Role)
-		if !typeOk {
-			role = &Role{internal: &internalRole{}, lock: new(sync.RWMutex)}
-		}
-		s.roles[id.ID()] = role
-		return role
 	}
+
+	role, typeOk := id.(*Role)
+	if !typeOk {
+		role = &Role{internal: &internalRole{}, lock: new(sync.RWMutex)}
+	}
+	s.roles[id.ID()] = role
+	return role
 }
