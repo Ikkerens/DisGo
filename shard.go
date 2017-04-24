@@ -21,7 +21,9 @@ type shard struct {
 	session *Session
 
 	webSocket *websocket.Conn
+	lock      sync.Mutex
 	shard     int
+
 	sessionID string
 	sequence  int
 	heartbeat int
@@ -29,7 +31,6 @@ type shard struct {
 	closeMessage chan int
 	stopListen   chan bool
 	stopRead     chan bool
-	lock         sync.RWMutex
 }
 
 func connectShard(session *Session, shardNum int) (*shard, error) {
@@ -174,8 +175,8 @@ func (s *shard) mainLoop() {
 }
 
 func (s *shard) sendFrame(frame *gatewayFrame) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
 	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
@@ -210,9 +211,6 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 }
 
 func (s *shard) readFrame() (*receivedFrame, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
 	logger.Tracef("Shard.readFrame() called")
 	msgType, msg, err := s.webSocket.ReadMessage()
 	if err != nil {
@@ -279,13 +277,12 @@ func (s *shard) onClose(code int, text string) error {
 }
 
 func (s *shard) disconnect(code int, text string) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
+	s.lock.Lock()
 	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
+	s.lock.Unlock()
 	if err != nil {
 		logger.ErrorE(err)
 	}
