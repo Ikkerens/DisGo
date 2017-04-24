@@ -6,8 +6,6 @@ import (
 	"github.com/slf4go/logger"
 )
 
-// +build ignore
-
 var (
 	bot   *disgo.User
 	games map[disgo.Snowflake]*ticTacToe

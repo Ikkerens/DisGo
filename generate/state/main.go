@@ -1,7 +1,5 @@
 package main
 
-// +build ignore
-
 import (
 	"bytes"
 	"go/format"
