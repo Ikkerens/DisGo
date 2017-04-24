@@ -22,7 +22,15 @@ func init() {
 	appQuit = make(chan bool)
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
-	go func() { <-signalChan; appQuit <- true }()
+	go func() {
+		<-signalChan
+		appQuit <- true
+
+		go func() {
+			<-signalChan
+			os.Exit(1)
+		}()
+	}()
 }
 
 func WaitForExit() {
