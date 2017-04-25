@@ -40,10 +40,10 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	s.globalRateLimit.Lock()
 	defer s.globalRateLimit.Unlock()
 
-	// Wait for the globalRateLimit lock if we're being globally ratelimited
+	// Wait for the globalRateLimit lock if we're being globally rate limited
 	now = time.Now()
 	if s.globalReset.After(now) {
-		logger.Warnf("We are waiting for the globalRateLimit ratelimit...")
+		logger.Warnf("We are waiting for the globalRateLimit...")
 		time.Sleep(s.globalReset.Sub(now))
 	}
 
@@ -60,18 +60,15 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 		headerGlobal     = response.Header.Get("X-RateLimit-Global")
 	)
 
-	// Are we being ratelimited because of that last request?
+	// Are we being rate limited because of that last request?
 	if response.StatusCode == 429 {
 		if headerRetryAfter == "" {
 			return errors.New("We are being ratelimited, but Discord didn't send a Retry-After header")
 		}
 
-		retryAfter, parseError := strconv.Atoi(headerRetryAfter)
-		if parseError != nil {
-			return errors.New("We are being ratelimited, but Discord didn't send a valid Retry-After header")
-		}
-
+		retryAfter, _ := strconv.Atoi(headerRetryAfter)
 		resetTime := now.Add(time.Duration(retryAfter) * time.Millisecond)
+
 		if headerGlobal == "true" {
 			logger.Error("We are being globally ratelimited!")
 			s.globalReset = resetTime
@@ -82,11 +79,16 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 		}
 
 		// Automatically queue a retry, but this one will wait for the timers to expire
-		return s.rateLimit(endPoint, call)
+		bucket.mutex.Unlock() // Unlock the mutexes so the recursive call can lock them
+		s.globalRateLimit.Unlock()
+		err := s.rateLimit(endPoint, call)
+		bucket.mutex.Lock() // Re-lock them to prevent the deferred unlock calls from panicking
+		s.globalRateLimit.Lock()
+		return err
 	}
 
-	// Nope, not ratelimited, but let's update our bucket first
 	var parseError error
+	// Nope, not rate limited, but let's update our bucket first
 	if headerRemaining != "" {
 		bucket.remaining, parseError = strconv.Atoi(headerRemaining)
 	}
@@ -109,10 +111,6 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	if err != nil {
 		return err // If the call previously errored, return that now (we still wanted to try and read the headers
 	}
-	if parseError != nil {
-		return parseError // Did we have any issues reading the headers?
-	}
 
-	// No errors? Awesome.
-	return nil
+	return parseError
 }
