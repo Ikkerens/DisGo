@@ -196,7 +196,7 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 		default:
 			frame, err := s.readFrame()
 			if err != nil {
-				if !s.session.shuttingDown {
+				if !s.session.isShuttingDown() {
 					if closeErr, isClose := err.(*websocket.CloseError); isClose {
 						s.closeMessage <- closeErr.Code
 					}
@@ -250,7 +250,7 @@ func (s *shard) reconnect() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if !s.session.shuttingDown {
+	if !s.session.isShuttingDown() {
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
 		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
 

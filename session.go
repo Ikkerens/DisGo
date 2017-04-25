@@ -21,6 +21,7 @@ type Session struct {
 
 	shards       []*shard
 	shuttingDown bool
+	stateLock    sync.RWMutex
 }
 
 func BuildWithBotToken(token string) (*Session, error) {
@@ -63,8 +64,17 @@ func (s *Session) Connect() error {
 }
 
 func (s *Session) Close() {
+	s.stateLock.Lock()
 	s.shuttingDown = true
+	s.stateLock.Unlock()
 	s.closeShards(websocket.CloseNormalClosure, "")
+}
+
+func (s *Session) isShuttingDown() bool {
+	s.stateLock.RLock()
+	defer s.stateLock.RUnlock()
+
+	return s.shuttingDown
 }
 
 func (s *Session) closeShards(code int, text string) {
