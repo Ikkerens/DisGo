@@ -270,7 +270,7 @@ func (s *shard) reconnect() {
 }
 
 func (s *shard) onClose(code int, text string) error {
-	logger.Infof("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
+	logger.Debugf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 	s.closeMessage <- code
 	s.reconnect()
 	return nil
@@ -289,7 +289,7 @@ func (s *shard) disconnect(code int, text string) {
 
 	select {
 	case code := <-s.closeMessage:
-		logger.Infof("Discord connection closed with code %d", code)
+		logger.Debugf("Discord connection closed with code %d", code)
 	case <-time.After(1 * time.Second):
 		logger.Warn("Discord did not reply to the close message, force-closing connection.")
 	}

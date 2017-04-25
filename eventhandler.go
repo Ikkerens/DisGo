@@ -75,16 +75,14 @@ func (s *Session) dispatchEvent(frame *receivedFrame) {
 		return
 	}
 
-	err := json.Unmarshal(frame.Data, &event)
-	if err != nil {
+	if err := json.Unmarshal(frame.Data, &event); err != nil {
 		logger.ErrorE(err)
 		return
 	}
 
 	logger.Debugf("Dispatching event %s to handlers", (*event).eventName())
 	(*event).setSession(s)
-	handlerSlice, exists := handlers[(*event).eventName()]
-	if exists {
+	if handlerSlice, exists := handlers[(*event).eventName()]; exists {
 		for _, handler := range handlerSlice {
 			handler(s, event)
 		}
