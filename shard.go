@@ -175,8 +175,11 @@ func (s *shard) mainLoop() {
 }
 
 func (s *shard) sendFrame(frame *gatewayFrame) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	// Resume will only be sent within the reconnect lock, we don't relock to prevent a deadlock
+	if frame.Op != opResume {
+		s.lock.Lock()
+		defer s.lock.Unlock()
+	}
 
 	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
