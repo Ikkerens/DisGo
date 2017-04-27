@@ -246,9 +246,10 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 	return &frame, nil
 }
 
-func (s *shard) reconnect() {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+func (s *shard) reconnect(recursive bool) {
+	if !recursive {
+		s.lock.Lock()
+	}
 
 	if !s.session.isShuttingDown() {
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
@@ -267,7 +268,9 @@ func (s *shard) reconnect() {
 		if err != nil {
 			logger.ErrorE(err)
 			time.Sleep(1 * time.Second)
-			go s.reconnect()
+			go s.reconnect(true)
+		} else {
+			s.lock.Unlock()
 		}
 	}
 }
@@ -275,7 +278,7 @@ func (s *shard) reconnect() {
 func (s *shard) onClose(code int, text string) error {
 	logger.Debugf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 	s.closeMessage <- code
-	s.reconnect()
+	s.reconnect(false)
 	return nil
 }
 
@@ -300,5 +303,5 @@ func (s *shard) disconnect(code int, text string) {
 	s.webSocket.Close()
 	s.stopRead <- true
 
-	go s.reconnect()
+	go s.reconnect(false)
 }
