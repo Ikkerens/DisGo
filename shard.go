@@ -18,16 +18,21 @@ import (
 )
 
 type shard struct {
+	// Parent session
 	session *Session
 
+	// Websocket information used for identification and reconnection
 	webSocket *websocket.Conn
-	lock      sync.Mutex
 	shard     int
-
 	sessionID string
 	sequence  int
 	heartbeat int
 
+	// Mutex locks, reconnect to make sure there is only 1 process reconnecting and concurrent read/write accesses on the socket
+	reconnectLock sync.Mutex
+	readL, writeL sync.Mutex
+
+	// Channels to pass around messages
 	closeMessage chan int
 	stopListen   chan bool
 	stopRead     chan bool
@@ -175,11 +180,14 @@ func (s *shard) mainLoop() {
 }
 
 func (s *shard) sendFrame(frame *gatewayFrame) {
-	// Resume will only be sent within the reconnect lock, we don't relock to prevent a deadlock
+	// Resume will only be sent within the reconnect reconnectLock, we don't relock to prevent a deadlock
 	if frame.Op != opResume {
-		s.lock.Lock()
-		defer s.lock.Unlock()
+		s.reconnectLock.Lock()
+		defer s.reconnectLock.Unlock()
 	}
+
+	s.writeL.Lock()
+	defer s.writeL.Unlock()
 
 	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
@@ -214,6 +222,9 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 }
 
 func (s *shard) readFrame() (*receivedFrame, error) {
+	s.readL.Lock()
+	defer s.readL.Unlock()
+
 	logger.Tracef("Shard.readFrame() called")
 	msgType, msg, err := s.webSocket.ReadMessage()
 	if err != nil {
@@ -248,7 +259,7 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 
 func (s *shard) reconnect(recursive bool) {
 	if !recursive {
-		s.lock.Lock()
+		s.reconnectLock.Lock()
 	}
 
 	if !s.session.isShuttingDown() {
@@ -270,7 +281,7 @@ func (s *shard) reconnect(recursive bool) {
 			time.Sleep(1 * time.Second)
 			go s.reconnect(true)
 		} else {
-			s.lock.Unlock()
+			s.reconnectLock.Unlock()
 		}
 	}
 }
@@ -286,9 +297,9 @@ func (s *shard) disconnect(code int, text string) {
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
-	s.lock.Lock()
+	s.writeL.Lock()
 	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
-	s.lock.Unlock()
+	s.writeL.Unlock()
 	if err != nil {
 		logger.ErrorE(err)
 	}
