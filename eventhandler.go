@@ -51,20 +51,18 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 		panic("The second argument of the passed Func should be a known Event.")
 	}
 
-	// Create a zero'd instance of the particular Event, so that we can call eventName() on it
-	eventInstance := reflect.New(eventType).Interface()
-	zeroEvent := eventInstance.(Event)
-
 	// Wrap the event handler in a reflected function that "type asserts" the event
 	wrapper := func(session *Session, event *Event) {
 		go handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(*event).Elem().Convert(eventType)})
 	}
 
-	list, exists := handlers[zeroEvent.eventName()]
+	// Create a zero'd instance of the particular Event, so that we can call eventName() on it
+	eventName := reflect.New(eventType).Interface().(Event).eventName()
+	list, exists := handlers[eventName]
 	if !exists {
-		handlers[zeroEvent.eventName()] = []eventHandler{wrapper}
+		handlers[eventName] = []eventHandler{wrapper}
 	} else {
-		handlers[zeroEvent.eventName()] = append(list, wrapper)
+		handlers[eventName] = append(list, wrapper)
 	}
 }
 
