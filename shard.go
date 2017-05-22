@@ -49,7 +49,7 @@ func connectShard(session *Session, shardNum int) (*shard, error) {
 		webSocket:    conn,
 		shard:        shardNum,
 		closeMessage: make(chan int, 1),
-		stopListen:   make(chan bool, 1),
+		stopListen:   make(chan bool),
 		stopRead:     make(chan bool),
 	}
 
@@ -158,7 +158,7 @@ func (s *shard) mainLoop() {
 				s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
 				sentHeartBeat = true
 			} else {
-				s.disconnect(websocket.CloseAbnormalClosure, "Did not respond to previous ping")
+				go s.disconnect(websocket.CloseAbnormalClosure, "Did not respond to previous ping")
 			}
 		case <-s.stopListen:
 			return
