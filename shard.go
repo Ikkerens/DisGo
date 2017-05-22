@@ -49,7 +49,7 @@ func connectShard(session *Session, shardNum int) (*shard, error) {
 		webSocket:    conn,
 		shard:        shardNum,
 		closeMessage: make(chan int, 1),
-		stopListen:   make(chan bool),
+		stopListen:   make(chan bool, 1),
 		stopRead:     make(chan bool),
 	}
 
