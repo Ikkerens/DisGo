@@ -9,3 +9,7 @@ func (s *User) AvatarURL() string {
 
 	return fmt.Sprintf(EndPointUserAvatar, s.internal.ID, s.internal.AvatarHash)
 }
+
+func (s *User) Mention() string {
+	return fmt.Sprintf("<@%s>", s.ID())
+}
