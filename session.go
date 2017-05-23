@@ -35,6 +35,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 
 	// Internal event handlers
 	session.RegisterEventHandler(onGuildMemberUpdate)
+	session.RegisterEventHandler(onGuildMemberAdd)
 
 	gateway := gatewayGetResponse{}
 	_, err := session.doRequest("GET", EndPointBotGateway().Url, nil, &gateway)
