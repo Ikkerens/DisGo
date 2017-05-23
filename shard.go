@@ -180,7 +180,7 @@ func (s *shard) mainLoop() {
 }
 
 func (s *shard) sendFrame(frame *gatewayFrame) {
-	// Resume will only be sent within the reconnect reconnectLock, we don't relock to prevent a deadlock
+	// Resume will only be sent within the reconnect lock, we don't relock to prevent a deadlock
 	if frame.Op != opResume {
 		s.reconnectLock.Lock()
 		defer s.reconnectLock.Unlock()

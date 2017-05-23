@@ -463,7 +463,7 @@ func (s *Guild) VoiceStates() []json.RawMessage {
 }
 
 // Members is used to export the Members from this struct.
-func (s *Guild) Members() []GuildMember {
+func (s *Guild) Members() []*GuildMember {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 

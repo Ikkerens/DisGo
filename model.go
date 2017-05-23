@@ -135,7 +135,7 @@ type internalAttachment struct {
 	ID       Snowflake `json:"id"`
 	Filename string    `json:"filename"`
 	Size     int       `json:"size"`
-	URL      string    `json:"Url"`
+	URL      string    `json:"url"`
 	ProxyURL string    `json:"proxy_url"`
 	Height   int       `json:"height"`
 	Width    int       `json:"width"`
@@ -145,7 +145,7 @@ type Embed struct {
 	Title       string         `json:"title,omitempty"`
 	Type        string         `json:"type,omitempty"`
 	Description string         `json:"description,omitempty"`
-	URL         string         `json:"Url,omitempty"`
+	URL         string         `json:"url,omitempty"`
 	Timestamp   string         `json:"timestamp"`
 	Color       int            `json:"color,omitempty"`
 	Footer      EmbedFooter    `json:"footer,omitempty"`
@@ -158,20 +158,20 @@ type Embed struct {
 }
 
 type EmbedThumbnail struct {
-	URL      string `json:"Url"`
+	URL      string `json:"url"`
 	ProxyURL string `json:"proxy_url,omitempty"`
 	Height   int    `json:"height,omitempty"`
 	Width    int    `json:"width,omitempty"`
 }
 
 type EmbedVideo struct {
-	URL    string `json:"Url"`
+	URL    string `json:"url"`
 	Height int    `json:"height,omitempty"`
 	Width  int    `json:"width,omitempty"`
 }
 
 type EmbedImage struct {
-	URL      string `json:"Url"`
+	URL      string `json:"url"`
 	ProxyURL string `json:"proxy_url,omitempty"`
 	Height   int    `json:"height,omitempty"`
 	Width    int    `json:"width,omitempty"`
@@ -179,12 +179,12 @@ type EmbedImage struct {
 
 type EmbedProvider struct {
 	Name string `json:"name,omitempty"`
-	URL  string `json:"Url,omitempty"`
+	URL  string `json:"url,omitempty"`
 }
 
 type EmbedAuthor struct {
 	Name         string `json:"name,omitempty"`
-	URL          string `json:"Url,omitempty"`
+	URL          string `json:"url,omitempty"`
 	IconURL      string `json:"icon_url,omitempty"`
 	ProxyIconURL string `json:"proxy_icon_url,omitempty"`
 }
@@ -227,7 +227,7 @@ type internalGuild struct {
 	Unavailable                 bool              `json:"unavailable"`
 	MemberCount                 int               `json:"member_count"`
 	VoiceStates                 []json.RawMessage `json:"voice_states"`
-	Members                     []GuildMember     `json:"members"`
+	Members                     []*GuildMember    `json:"members"`
 	Channels                    []*Channel        `json:"channels"`
 	Presences                   []Presence        `json:"presences"`
 }
@@ -286,5 +286,5 @@ type internalPresence struct {
 type internalGame struct {
 	Name string `json:"name"`
 	Type int    `json:"type"`
-	URL  string `json:"Url,omitempty"`
+	URL  string `json:"url,omitempty"`
 }
