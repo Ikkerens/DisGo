@@ -25,7 +25,11 @@ func init() {
 	handlers = make(map[string][]eventHandler)
 }
 
-func (s *Session) RegisterEventHandler(handlerI interface{}) {
+func (s *Session) RegisterEventHandler(handler interface{}) {
+	s.registerEventHandler(handler, true)
+}
+
+func (s *Session) registerEventHandler(handlerI interface{}, goroutine bool) {
 	// These panics should be purely informational
 	defer logger.RecoverStack()
 
@@ -53,7 +57,15 @@ func (s *Session) RegisterEventHandler(handlerI interface{}) {
 
 	// Wrap the event handler in a reflected function that "type asserts" the event
 	wrapper := func(session *Session, event *Event) {
-		go handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(*event).Elem().Convert(eventType)})
+		handler.Call([]reflect.Value{reflect.ValueOf(session), reflect.ValueOf(*event).Elem().Convert(eventType)})
+	}
+
+	// Wrap it in a goroutine if needed
+	if goroutine {
+		internal := wrapper
+		wrapper = func(session *Session, event *Event) {
+			go internal(session, event)
+		}
 	}
 
 	// Create a zero'd instance of the particular Event, so that we can call eventName() on it

@@ -1,6 +1,9 @@
 package disgo
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 type sendMessageBody struct {
 	Content string `json:"content"`
@@ -44,6 +47,47 @@ func (s *Session) sendMessageInternal(method func(endPoint EndPoint, body, targe
 	return message, nil
 }
 
+type GetMessageMode int
+
+const (
+	GetLastMessages GetMessageMode = iota
+	GetMessagesAround
+	GetMessagesBefore
+	GetMessagesAfter
+)
+
+func (s *Session) GetLastMessages(channelID Snowflake, limit int) ([]*Message, error) {
+	return s.GetMessages(channelID, GetLastMessages, 0, limit)
+}
+
+func (s *Session) GetMessages(channelID Snowflake, mode GetMessageMode, target Snowflake, limit int) ([]*Message, error) {
+	endPoint := EndPointMessages(channelID)
+	limit = int(math.Max(1, math.Min(float64(limit), 100)))
+
+	switch mode {
+	case GetLastMessages:
+		break
+	case GetMessagesAround:
+		endPoint.Url += "?around=" + target.String()
+	case GetMessagesBefore:
+		endPoint.Url += "?before=" + target.String()
+	case GetMessagesAfter:
+		endPoint.Url += "?after=" + target.String()
+	default:
+		panic("Invalid mode parameter passed to Session#GetMessages")
+	}
+
+	endPoint.Url += fmt.Sprintf("&limit=%d", limit)
+	messages := make([]*Message, 0, limit)
+
+	err := s.doHttpGet(endPoint, &messages)
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
 func (s *Message) Edit(content string) (err error) {
 	_, err = s.session.EditMessage(s.internal.ChannelID, s.internal.ID, content)
 	return
@@ -67,6 +111,10 @@ func (s *Session) DeleteMessage(channelID, messageID Snowflake) error {
 
 func (s *Message) Delete() error {
 	return s.session.DeleteMessage(s.internal.ChannelID, s.internal.ID)
+}
+
+func (s *Session) BulkDeleteMessages(channelID Snowflake, ids []Snowflake) error {
+	return s.doHttpPost(EndPointMessageBulkDelete(channelID), ids, nil)
 }
 
 func (s *Session) MessageAddReaction(channelID, messageID Snowflake, emoji string) error {
