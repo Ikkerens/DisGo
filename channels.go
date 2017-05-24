@@ -62,11 +62,11 @@ func (s *Session) GetLastMessages(channelID Snowflake, limit int) ([]*Message, e
 
 func (s *Session) GetMessages(channelID Snowflake, mode GetMessageMode, target Snowflake, limit int) ([]*Message, error) {
 	endPoint := EndPointMessages(channelID)
-	limit = int(math.Max(1, math.Min(float64(limit), 100)))
+	limit = int(math.Max(2, math.Min(float64(limit), 100)))
 
 	switch mode {
 	case GetLastMessages:
-		break
+		endPoint.Url += "?"
 	case GetMessagesAround:
 		endPoint.Url += "?around=" + target.String()
 	case GetMessagesBefore:
@@ -114,7 +114,9 @@ func (s *Message) Delete() error {
 }
 
 func (s *Session) BulkDeleteMessages(channelID Snowflake, ids []Snowflake) error {
-	return s.doHttpPost(EndPointMessageBulkDelete(channelID), ids, nil)
+	return s.doHttpPost(EndPointMessageBulkDelete(channelID), struct {
+		Messages []Snowflake `json:"messages"`
+	}{ids}, nil)
 }
 
 func (s *Session) MessageAddReaction(channelID, messageID Snowflake, emoji string) error {
