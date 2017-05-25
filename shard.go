@@ -155,10 +155,10 @@ func (s *shard) mainLoop() {
 		select {
 		case <-heartbeat.C:
 			if !sentHeartBeat {
-				s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
+				go s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
 				sentHeartBeat = true
 			} else {
-				go s.disconnect(websocket.CloseAbnormalClosure, "Did not respond to previous ping")
+				go s.disconnect(websocket.CloseAbnormalClosure, "Did not respond to previous heartbeat")
 			}
 		case <-s.stopListen:
 			return
