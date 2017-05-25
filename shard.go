@@ -29,8 +29,8 @@ type shard struct {
 	heartbeat int
 
 	// Mutex locks, reconnect to make sure there is only 1 process reconnecting and concurrent read/write accesses on the socket
-	reconnectLock sync.Mutex
-	readL, writeL sync.Mutex
+	reconnectLock       sync.Mutex
+	readLock, writeLock sync.Mutex
 
 	// Channels to pass around messages
 	closeMessage chan int
@@ -186,8 +186,8 @@ func (s *shard) sendFrame(frame *gatewayFrame) {
 		defer s.reconnectLock.Unlock()
 	}
 
-	s.writeL.Lock()
-	defer s.writeL.Unlock()
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 
 	logger.Debugf("Sending frame with opCode: %d", frame.Op)
 	s.webSocket.WriteJSON(frame)
@@ -222,8 +222,8 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 }
 
 func (s *shard) readFrame() (*receivedFrame, error) {
-	s.readL.Lock()
-	defer s.readL.Unlock()
+	s.readLock.Lock()
+	defer s.readLock.Unlock()
 
 	logger.Tracef("Shard.readFrame() called")
 	msgType, msg, err := s.webSocket.ReadMessage()
@@ -289,7 +289,7 @@ func (s *shard) reconnect(recursive bool) {
 func (s *shard) onClose(code int, text string) error {
 	logger.Debugf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 	s.closeMessage <- code
-	s.reconnect(false)
+	go s.reconnect(false)
 	return nil
 }
 
@@ -297,9 +297,9 @@ func (s *shard) disconnect(code int, text string) {
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
-	s.writeL.Lock()
+	s.writeLock.Lock()
 	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
-	s.writeL.Unlock()
+	s.writeLock.Unlock()
 	if err != nil {
 		logger.ErrorE(err)
 	}
