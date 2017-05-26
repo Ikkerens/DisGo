@@ -26,3 +26,7 @@ func (s *Guild) GetUserRoles(userID Snowflake) ([]Snowflake, bool) {
 
 	return nil, false
 }
+
+func (s *Session) KickUser(guildID, userID Snowflake) error {
+	return s.doHttpDelete(EndPointGuildMember(guildID, userID), nil)
+}
