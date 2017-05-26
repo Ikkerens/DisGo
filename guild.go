@@ -7,3 +7,22 @@ func (s *Session) AddGuildMemberRole(guildID, userID, roleID Snowflake) error {
 func (s *Session) RemoveGuildMemberRole(guildID, userID, roleID Snowflake) error {
 	return s.doHttpDelete(EndPointGuildMemberRoles(guildID, userID, roleID), nil)
 }
+
+func (s *Guild) GetUserMembership(userID Snowflake) (*GuildMember, bool) {
+	for _, membership := range s.internal.Members {
+		if membership.User().ID() == userID {
+			return membership, true
+		}
+	}
+
+	return nil, false
+}
+
+func (s *Guild) GetUserRoles(userID Snowflake) ([]Snowflake, bool) {
+	membership, exists := s.GetUserMembership(userID)
+	if exists {
+		return membership.RolesIDs(), true
+	}
+
+	return nil, false
+}
