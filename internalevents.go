@@ -29,12 +29,11 @@ func onGuildMemberUpdate(_ *Session, e GuildMemberUpdateEvent) {
 		guild.lock.Lock()
 		defer guild.lock.Unlock()
 
-		for i := range guild.internal.Members {
-			if guild.internal.Members[i].User().ID() == e.User.ID() {
-				internal := guild.internal.Members[i].internal
-				internal.RolesIDs = e.Roles
-				internal.Nick = e.Nick
-			}
+		membership, exists := guild.GetUserMembership(e.User.ID())
+
+		if exists {
+			membership.internal.RolesIDs = e.Roles
+			membership.internal.Nick = e.Nick
 		}
 	}
 }
