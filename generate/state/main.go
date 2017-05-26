@@ -40,7 +40,8 @@ func main() {
 		import "sync"
 
 		type state struct { {{range .}}
-			{{. | ToLower}}s map[Snowflake]*{{.}} {{end}}
+			{{. | ToLower}}s map[Snowflake]*{{.}}
+			{{. | ToLower}}Lock sync.RWMutex{{end}}
 		}
 
 		var objects = &state{ {{range .}}
@@ -49,7 +50,10 @@ func main() {
 
 		{{range .}}
 			func (s *state) register{{.}}(id identifiableObject) *{{.}} {
-				if registered, exists := s.{{. | ToLower}}s[id.ID()]; exists {
+				s.{{. | ToLower}}Lock.RLock()
+				registered, exists := s.{{. | ToLower}}s[id.ID()]
+				s.{{. | ToLower}}Lock.RUnlock()
+				if exists {
 					return registered
 				}
 
@@ -57,7 +61,9 @@ func main() {
 				if !typeOk {
 					{{. | ToLower}} = &{{.}}{internal: &internal{{.}}{}, lock: new(sync.RWMutex)}
 				}
+				s.{{. | ToLower}}Lock.Lock()
 				s.{{. | ToLower}}s[id.ID()] = {{. | ToLower}}
+				s.{{. | ToLower}}Lock.Unlock()
 				return {{. | ToLower}}
 			}
 		{{end}}

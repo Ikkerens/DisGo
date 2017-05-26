@@ -6,11 +6,16 @@ package disgo
 import "sync"
 
 type state struct {
-	users    map[Snowflake]*User
-	guilds   map[Snowflake]*Guild
-	channels map[Snowflake]*Channel
-	messages map[Snowflake]*Message
-	roles    map[Snowflake]*Role
+	users       map[Snowflake]*User
+	userLock    sync.RWMutex
+	guilds      map[Snowflake]*Guild
+	guildLock   sync.RWMutex
+	channels    map[Snowflake]*Channel
+	channelLock sync.RWMutex
+	messages    map[Snowflake]*Message
+	messageLock sync.RWMutex
+	roles       map[Snowflake]*Role
+	roleLock    sync.RWMutex
 }
 
 var objects = &state{
@@ -22,7 +27,10 @@ var objects = &state{
 }
 
 func (s *state) registerUser(id identifiableObject) *User {
-	if registered, exists := s.users[id.ID()]; exists {
+	s.userLock.RLock()
+	registered, exists := s.users[id.ID()]
+	s.userLock.RUnlock()
+	if exists {
 		return registered
 	}
 
@@ -30,12 +38,17 @@ func (s *state) registerUser(id identifiableObject) *User {
 	if !typeOk {
 		user = &User{internal: &internalUser{}, lock: new(sync.RWMutex)}
 	}
+	s.userLock.Lock()
 	s.users[id.ID()] = user
+	s.userLock.Unlock()
 	return user
 }
 
 func (s *state) registerGuild(id identifiableObject) *Guild {
-	if registered, exists := s.guilds[id.ID()]; exists {
+	s.guildLock.RLock()
+	registered, exists := s.guilds[id.ID()]
+	s.guildLock.RUnlock()
+	if exists {
 		return registered
 	}
 
@@ -43,12 +56,17 @@ func (s *state) registerGuild(id identifiableObject) *Guild {
 	if !typeOk {
 		guild = &Guild{internal: &internalGuild{}, lock: new(sync.RWMutex)}
 	}
+	s.guildLock.Lock()
 	s.guilds[id.ID()] = guild
+	s.guildLock.Unlock()
 	return guild
 }
 
 func (s *state) registerChannel(id identifiableObject) *Channel {
-	if registered, exists := s.channels[id.ID()]; exists {
+	s.channelLock.RLock()
+	registered, exists := s.channels[id.ID()]
+	s.channelLock.RUnlock()
+	if exists {
 		return registered
 	}
 
@@ -56,12 +74,17 @@ func (s *state) registerChannel(id identifiableObject) *Channel {
 	if !typeOk {
 		channel = &Channel{internal: &internalChannel{}, lock: new(sync.RWMutex)}
 	}
+	s.channelLock.Lock()
 	s.channels[id.ID()] = channel
+	s.channelLock.Unlock()
 	return channel
 }
 
 func (s *state) registerMessage(id identifiableObject) *Message {
-	if registered, exists := s.messages[id.ID()]; exists {
+	s.messageLock.RLock()
+	registered, exists := s.messages[id.ID()]
+	s.messageLock.RUnlock()
+	if exists {
 		return registered
 	}
 
@@ -69,12 +92,17 @@ func (s *state) registerMessage(id identifiableObject) *Message {
 	if !typeOk {
 		message = &Message{internal: &internalMessage{}, lock: new(sync.RWMutex)}
 	}
+	s.messageLock.Lock()
 	s.messages[id.ID()] = message
+	s.messageLock.Unlock()
 	return message
 }
 
 func (s *state) registerRole(id identifiableObject) *Role {
-	if registered, exists := s.roles[id.ID()]; exists {
+	s.roleLock.RLock()
+	registered, exists := s.roles[id.ID()]
+	s.roleLock.RUnlock()
+	if exists {
 		return registered
 	}
 
@@ -82,6 +110,8 @@ func (s *state) registerRole(id identifiableObject) *Role {
 	if !typeOk {
 		role = &Role{internal: &internalRole{}, lock: new(sync.RWMutex)}
 	}
+	s.roleLock.Lock()
 	s.roles[id.ID()] = role
+	s.roleLock.Unlock()
 	return role
 }

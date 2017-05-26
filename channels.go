@@ -47,10 +47,29 @@ func (s *Session) sendMessageInternal(method func(endPoint EndPoint, body, targe
 	return message, nil
 }
 
-type GetMessageMode int
+func (s *Session) GetMessage(channelID, messageID Snowflake) (*Message, error) {
+	msg, exists := objects.messages[messageID]
+
+	if !exists {
+		msg = objects.registerMessage(&IDObject{messageID})
+		err := s.doHttpGet(EndPointMessage(channelID, messageID), msg)
+
+		if err != nil {
+			objects.messageLock.Lock()
+			delete(objects.messages, messageID)
+			objects.messageLock.Unlock()
+			return nil, err
+		}
+
+	}
+
+	return msg, nil
+}
+
+type GetMessagesMode int
 
 const (
-	GetLastMessages GetMessageMode = iota
+	GetLastMessages GetMessagesMode = iota
 	GetMessagesAround
 	GetMessagesBefore
 	GetMessagesAfter
@@ -60,7 +79,7 @@ func (s *Session) GetLastMessages(channelID Snowflake, limit int) ([]*Message, e
 	return s.GetMessages(channelID, GetLastMessages, 0, limit)
 }
 
-func (s *Session) GetMessages(channelID Snowflake, mode GetMessageMode, target Snowflake, limit int) ([]*Message, error) {
+func (s *Session) GetMessages(channelID Snowflake, mode GetMessagesMode, target Snowflake, limit int) ([]*Message, error) {
 	endPoint := EndPointMessages(channelID)
 	limit = int(math.Max(2, math.Min(float64(limit), 100)))
 

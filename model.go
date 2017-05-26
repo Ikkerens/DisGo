@@ -15,6 +15,11 @@ import (
 
 type Snowflake uint64
 
+func ParseSnowflake(str string) (Snowflake, error) {
+	intVal, err := strconv.ParseUint(str, 10, 64)
+	return Snowflake(intVal), err
+}
+
 func (s Snowflake) String() string {
 	return strconv.FormatUint(uint64(s), 10)
 }
@@ -146,7 +151,7 @@ type Embed struct {
 	Type        string         `json:"type,omitempty"`
 	Description string         `json:"description,omitempty"`
 	URL         string         `json:"url,omitempty"`
-	Timestamp   string         `json:"timestamp"`
+	Timestamp   time.Time      `json:"timestamp,string,omitempty"`
 	Color       int            `json:"color,omitempty"`
 	Footer      EmbedFooter    `json:"footer,omitempty"`
 	Image       EmbedImage     `json:"image,omitempty"`
