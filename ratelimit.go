@@ -51,6 +51,10 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	response, err := call()
 	now = time.Now()
 
+	if err != nil {
+		return err
+	}
+
 	// Read the headers
 	var (
 		headerRemaining  = response.Header.Get("X-RateLimit-Remaining")
