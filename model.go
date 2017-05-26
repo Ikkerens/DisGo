@@ -87,6 +87,26 @@ func (o *IDObject) ID() Snowflake {
 /* Resources/Channel */
 /*********************/
 
+type DiscordTime struct {
+	*time.Time
+}
+
+func (t *DiscordTime) UnmarshalJSON(data []byte) error {
+	if t.Time == nil {
+		t.Time = &time.Time{}
+	}
+
+	return json.Unmarshal(data, t.Time)
+}
+
+func (t *DiscordTime) MarshalJSON() ([]byte, error) {
+	if t.Time == nil || t.IsZero() {
+		return json.Marshal("")
+	}
+
+	return json.Marshal(t.Time)
+}
+
 type internalChannel struct {
 	ID                   Snowflake   `json:"id"`
 	GuildID              Snowflake   `json:"guild_id"`
@@ -109,8 +129,8 @@ type internalMessage struct {
 	ChannelID       Snowflake    `json:"channel_id"`
 	Author          *User        `json:"author"`
 	Content         string       `json:"content"`
-	Timestamp       time.Time    `json:"timestamp,string,omitempty"`
-	EditedTimestamp time.Time    `json:"edited_timestamp,string,omitempty"`
+	Timestamp       DiscordTime  `json:"timestamp,omitempty"`
+	EditedTimestamp DiscordTime  `json:"edited_timestamp,omitempty"`
 	TTS             bool         `json:"tts"`
 	MentionEveryone bool         `json:"mention_everyone"`
 	Mentions        []*User      `json:"mentions"`
@@ -151,7 +171,7 @@ type Embed struct {
 	Type        string         `json:"type,omitempty"`
 	Description string         `json:"description,omitempty"`
 	URL         string         `json:"url,omitempty"`
-	Timestamp   time.Time      `json:"timestamp,string,omitempty"`
+	Timestamp   DiscordTime    `json:"timestamp,omitempty"`
 	Color       int            `json:"color,omitempty"`
 	Footer      EmbedFooter    `json:"footer,omitempty"`
 	Image       EmbedImage     `json:"image,omitempty"`
@@ -227,7 +247,7 @@ type internalGuild struct {
 	Emojis                      []Emoji           `json:"emojis"`
 	Features                    []json.RawMessage `json:"features"`
 	MFALevel                    int               `json:"mfa_level"`
-	JoinedAt                    time.Time         `json:"joined_at,string"`
+	JoinedAt                    DiscordTime       `json:"joined_at"`
 	Large                       bool              `json:"large"`
 	Unavailable                 bool              `json:"unavailable"`
 	MemberCount                 int               `json:"member_count"`
@@ -241,7 +261,7 @@ type internalGuildMember struct {
 	User     *User       `json:"user"`
 	Nick     string      `json:"nick,omitempty"`
 	RolesIDs []Snowflake `json:"roles"`
-	JoinedAt time.Time   `json:"joined_at"`
+	JoinedAt DiscordTime `json:"joined_at"`
 	Deaf     bool        `json:"deaf"`
 	Mute     bool        `json:"mute"`
 }

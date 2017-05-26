@@ -6,7 +6,6 @@ package disgo
 import (
 	"encoding/json"
 	"sync"
-	"time"
 )
 
 // Attachment is based on the Discord object with the same name.
@@ -423,7 +422,7 @@ func (s *Guild) MFALevel() int {
 }
 
 // JoinedAt is used to export the JoinedAt from this struct.
-func (s *Guild) JoinedAt() time.Time {
+func (s *Guild) JoinedAt() DiscordTime {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -520,7 +519,7 @@ func (s *GuildMember) RolesIDs() []Snowflake {
 }
 
 // JoinedAt is used to export the JoinedAt from this struct.
-func (s *GuildMember) JoinedAt() time.Time {
+func (s *GuildMember) JoinedAt() DiscordTime {
 	return s.internal.JoinedAt
 }
 
@@ -597,7 +596,7 @@ func (s *Message) Content() string {
 }
 
 // Timestamp is used to export the Timestamp from this struct.
-func (s *Message) Timestamp() time.Time {
+func (s *Message) Timestamp() DiscordTime {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -605,7 +604,7 @@ func (s *Message) Timestamp() time.Time {
 }
 
 // EditedTimestamp is used to export the EditedTimestamp from this struct.
-func (s *Message) EditedTimestamp() time.Time {
+func (s *Message) EditedTimestamp() DiscordTime {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 

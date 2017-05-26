@@ -110,33 +110,36 @@ func (s *shard) identify() error {
 		}})
 	}
 
-	frame, err := s.readFrame()
-	if err != nil {
-		return err
-	}
+	for {
+		frame, err := s.readFrame()
+		if err != nil {
+			return err
+		}
 
-	if frame.Op == opDispatch {
-		if frame.EventName == "READY" {
-			ready := ReadyEvent{}
-			if err := json.Unmarshal(frame.Data, &ready); err != nil {
-				return err
+		if frame.Op == opDispatch {
+			switch frame.EventName {
+			case "READY":
+				ready := ReadyEvent{}
+				if err := json.Unmarshal(frame.Data, &ready); err != nil {
+					return err
+				}
+
+				s.sessionID = ready.SessionID
+
+				fallthrough
+			case "RESUMED":
+				s.session.dispatchEvent(frame)
+				return nil // Break out of the loop, we have what we want
+			default:
+				s.session.dispatchEvent(frame) // Nope, resume action, let's wait for more frames
 			}
-
-			s.sessionID = ready.SessionID
-			s.session.dispatchEvent(frame)
-			return nil
-		} else if frame.EventName == "RESUMED" {
-			s.session.dispatchEvent(frame)
+		} else if frame.Op == opInvalidSession {
+			s.sessionID = "" // Invalidate session and retry
+			s.identify()
 			return nil
 		} else {
-			return fmt.Errorf("Discord sent event of type '%s', expected 'READY' or 'RESUMED'", frame.EventName)
+			return fmt.Errorf("Unexpected opCode received from Discord: %d", frame.Op)
 		}
-	} else if frame.Op == opInvalidSession {
-		s.sessionID = "" // Invalidate session and retry
-		s.identify()
-		return nil
-	} else {
-		return fmt.Errorf("Unexpected opCode received from Discord: %d", frame.Op)
 	}
 }
 
