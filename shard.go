@@ -297,6 +297,11 @@ func (s *shard) onClose(code int, text string) error {
 }
 
 func (s *shard) disconnect(code int, text string) {
+	if s.webSocket == nil {
+		logger.Warnf("Shard.disconnect() called on a connection that is already gone, ignoring")
+		return
+	}
+
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
