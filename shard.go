@@ -176,7 +176,7 @@ func (s *shard) mainLoop() {
 			case opDispatch:
 				s.session.dispatchEvent(frame)
 			default:
-				logger.Errorf("Unknown opCode received: %d", frame.Op)
+				logger.Errorf("Unexpected opCode received: %d", frame.Op)
 			}
 		}
 	}
@@ -275,7 +275,6 @@ func (s *shard) reconnect(recursive bool) {
 
 			if err != nil {
 				conn.Close()
-				s.webSocket = nil
 			}
 		}
 
@@ -297,11 +296,6 @@ func (s *shard) onClose(code int, text string) error {
 }
 
 func (s *shard) disconnect(code int, text string) {
-	if s.webSocket == nil {
-		logger.Warnf("Shard.disconnect() called on a connection that is already gone, ignoring")
-		return
-	}
-
 	logger.Tracef("Shard.disconnect() called")
 	s.stopListen <- true
 
