@@ -29,8 +29,8 @@ type shard struct {
 	heartbeat int
 
 	// Mutex locks, reconnect to make sure there is only 1 process reconnecting and concurrent read/write accesses on the socket
-	reconnectLock       sync.Mutex
 	readLock, writeLock sync.Mutex
+	reconnectLock       sync.RWMutex
 	isReconnecting      bool
 
 	// Channels to pass around messages
@@ -262,11 +262,15 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 }
 
 func (s *shard) startReconnect() {
-	if !s.isReconnecting {
-		s.reconnectLock.Lock()
-		s.isReconnecting = true
-		go s.reconnect()
+	s.reconnectLock.RLock()
+	if s.isReconnecting {
+		return
 	}
+	s.reconnectLock.RUnlock()
+
+	s.reconnectLock.Lock()
+	s.isReconnecting = true
+	go s.reconnect()
 }
 
 func (s *shard) reconnect() {
