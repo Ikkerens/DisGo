@@ -31,6 +31,7 @@ type shard struct {
 	// Mutex locks, reconnect to make sure there is only 1 process reconnecting and concurrent read/write accesses on the socket
 	reconnectLock       sync.Mutex
 	readLock, writeLock sync.Mutex
+	isReconnecting      bool
 
 	// Channels to pass around messages
 	closeMessage chan int
@@ -260,11 +261,15 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 	return &frame, nil
 }
 
-func (s *shard) reconnect(recursive bool) {
-	if !recursive {
+func (s *shard) startReconnect() {
+	if !s.isReconnecting {
 		s.reconnectLock.Lock()
+		s.isReconnecting = true
+		go s.reconnect()
 	}
+}
 
+func (s *shard) reconnect() {
 	if !s.session.isShuttingDown() {
 		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
 		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
@@ -281,8 +286,9 @@ func (s *shard) reconnect(recursive bool) {
 		if err != nil {
 			logger.ErrorE(err)
 			time.Sleep(1 * time.Second)
-			go s.reconnect(true)
+			go s.reconnect()
 		} else {
+			s.isReconnecting = false
 			s.reconnectLock.Unlock()
 		}
 	}
@@ -291,7 +297,7 @@ func (s *shard) reconnect(recursive bool) {
 func (s *shard) onClose(code int, text string) error {
 	logger.Debugf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 	s.closeMessage <- code
-	go s.reconnect(false)
+	s.startReconnect()
 	return nil
 }
 
@@ -316,5 +322,5 @@ func (s *shard) disconnect(code int, text string) {
 	s.webSocket.Close()
 	s.stopRead <- true
 
-	go s.reconnect(false)
+	s.startReconnect()
 }
