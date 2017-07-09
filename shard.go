@@ -174,6 +174,9 @@ func (s *shard) mainLoop() {
 				sentHeartBeat = false
 			case opReconnect:
 				s.disconnect(websocket.CloseNormalClosure, "op Reconnect")
+			case opInvalidSession:
+				s.sessionID = ""
+				s.identify()
 			case opDispatch:
 				s.session.dispatchEvent(frame)
 			default:
