@@ -37,3 +37,39 @@ func onGuildMemberUpdate(_ *Session, e GuildMemberUpdateEvent) {
 		}
 	}
 }
+
+func onChannelCreate(_ *Session, e ChannelCreateEvent) {
+	objects.guildLock.RLock()
+	guild, exists := objects.guilds[e.GuildID()]
+	objects.guildLock.RUnlock()
+
+	if exists {
+		guild.lock.Lock()
+		defer guild.lock.Unlock()
+
+		guild.internal.Channels = append(guild.internal.Channels, e.Channel)
+	}
+}
+
+func onChannelDelete(_ *Session, e ChannelDeleteEvent) {
+	objects.guildLock.RLock()
+	guild, exists := objects.guilds[e.GuildID()]
+	objects.guildLock.RUnlock()
+
+	if exists {
+		guild.lock.Lock()
+		defer guild.lock.Unlock()
+
+		index := -1
+		for i, channel := range guild.internal.Channels {
+			if channel.ID() == e.ID() {
+				index = i
+				break
+			}
+		}
+
+		if index != -1 {
+			guild.internal.Channels = append(guild.internal.Channels[:index], guild.internal.Channels[index+1:]...)
+		}
+	}
+}
