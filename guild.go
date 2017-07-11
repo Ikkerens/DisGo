@@ -1,5 +1,9 @@
 package disgo
 
+func (s *Guild) BuildChannel(name string) *ChannelBuilder {
+	return s.session.BuildChannel(s.internal.ID, name)
+}
+
 func (s *Session) AddGuildMemberRole(guildID, userID, roleID Snowflake) error {
 	return s.doHttpPut(EndPointGuildMemberRoles(guildID, userID, roleID), nil)
 }

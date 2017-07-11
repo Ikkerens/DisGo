@@ -59,6 +59,8 @@ func BuildWithBotToken(token string) (*Session, error) {
 	session := &Session{tokenType: "Bot ", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
 
 	// Internal event handlers
+	session.registerEventHandler(onChannelCreate, false)
+	session.registerEventHandler(onChannelDelete, false)
 	session.registerEventHandler(onGuildMemberUpdate, false)
 	session.registerEventHandler(onGuildMemberAdd, false)
 

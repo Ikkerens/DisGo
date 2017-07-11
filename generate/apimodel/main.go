@@ -115,6 +115,11 @@ func main() {
 				return json.Unmarshal(b, &s.internal)
 			}
 
+			{{if .StateType}}
+			func (s *{{.Exported}}) setSession(session *Session) {
+				s.session = session
+			}{{end}}
+
 			{{$p := .}}
 			{{range .Fields}}
 				// {{ .Name}} is used to export the {{.Name}} from this struct.

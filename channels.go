@@ -5,6 +5,25 @@ import (
 	"math"
 )
 
+func (s *Session) BuildChannel(guildID Snowflake, name string) *ChannelBuilder {
+	return &ChannelBuilder{
+		guildID: guildID,
+		session: s,
+
+		Name:                 name,
+		Type:                 "text",
+		PermissionOverwrites: make([]Overwrite, 0),
+	}
+}
+
+func (s *Session) DeleteChannel(channelID Snowflake) error {
+	return s.doHttpDelete(EndPointChannel(channelID), nil)
+}
+
+func (s *Channel) Delete() error {
+	return s.session.DeleteChannel(s.ID())
+}
+
 type sendMessageBody struct {
 	Content string `json:"content"`
 	Embed   *Embed `json:"embed,omitempty"`

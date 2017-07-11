@@ -91,6 +91,10 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, &s.internal)
 }
 
+func (s *Channel) setSession(session *Session) {
+	s.session = session
+}
+
 // ID is used to export the ID from this struct.
 func (s *Channel) ID() Snowflake {
 	s.lock.RLock()
@@ -291,6 +295,10 @@ func (s *Guild) UnmarshalJSON(b []byte) error {
 	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
+}
+
+func (s *Guild) setSession(session *Session) {
+	s.session = session
 }
 
 // ID is used to export the ID from this struct.
@@ -563,6 +571,10 @@ func (s *Message) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, &s.internal)
 }
 
+func (s *Message) setSession(session *Session) {
+	s.session = session
+}
+
 // ID is used to export the ID from this struct.
 func (s *Message) ID() Snowflake {
 	s.lock.RLock()
@@ -691,44 +703,6 @@ func (s *Message) WebhookID() string {
 	return s.internal.WebhookID
 }
 
-// Overwrite is based on the Discord object with the same name.
-// Any fields can be obtained by calling the respective getters.
-type Overwrite struct {
-	session  *Session
-	internal *internalOverwrite
-}
-
-// MarshalJSON is used to convert this object into its json representation for Discord
-func (s *Overwrite) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.internal)
-}
-
-// UnmarshalJSON is used to convert json discord objects back into their respective structs
-func (s *Overwrite) UnmarshalJSON(b []byte) error {
-	s.internal = &internalOverwrite{}
-	return json.Unmarshal(b, &s.internal)
-}
-
-// ID is used to export the ID from this struct.
-func (s *Overwrite) ID() Snowflake {
-	return s.internal.ID
-}
-
-// Type is used to export the Type from this struct.
-func (s *Overwrite) Type() string {
-	return s.internal.Type
-}
-
-// Allow is used to export the Allow from this struct.
-func (s *Overwrite) Allow() int {
-	return s.internal.Allow
-}
-
-// Deny is used to export the Deny from this struct.
-func (s *Overwrite) Deny() int {
-	return s.internal.Deny
-}
-
 // Presence is based on the Discord object with the same name.
 // Any fields can be obtained by calling the respective getters.
 type Presence struct {
@@ -835,6 +809,10 @@ func (s *Role) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, &s.internal)
 }
 
+func (s *Role) setSession(session *Session) {
+	s.session = session
+}
+
 // ID is used to export the ID from this struct.
 func (s *Role) ID() Snowflake {
 	s.lock.RLock()
@@ -927,6 +905,10 @@ func (s *User) UnmarshalJSON(b []byte) error {
 	s.lock = registered.lock
 	s.internal = registered.internal
 	return json.Unmarshal(b, &s.internal)
+}
+
+func (s *User) setSession(session *Session) {
+	s.session = session
 }
 
 // ID is used to export the ID from this struct.

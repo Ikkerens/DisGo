@@ -83,6 +83,41 @@ func (o *IDObject) ID() Snowflake {
 	return o.Id
 }
 
+/***************/
+/* Permissions */
+/***************/
+
+const (
+	PermissionCreateInstantInvite = 0x00000001
+	PermissionKickMembers         = 0x00000002
+	PermissionBanMembers          = 0x00000004
+	PermissionAdministrator       = 0x00000008
+	PermissionManageChannels      = 0x00000010
+	PermissionManageGuild         = 0x00000020
+	PermissionAddReactions        = 0x00000040
+	PermissionViewAuditLog        = 0x00000080
+	PermissionReadMessages        = 0x00000400
+	PermissionSendMessages        = 0x00000800
+	PermissionSendTTSMessages     = 0x00001000
+	PermissionManageMessages      = 0x00002000
+	PermissionEmbedLinks          = 0x00004000
+	PermissionAttachFiles         = 0x00008000
+	PermissionReadMessageHistory  = 0x00010000
+	PermissionMentionEveryone     = 0x00020000
+	PermissionUseExternalEmojis   = 0x00040000
+	PermissionConnect             = 0x00100000
+	PermissionSpeak               = 0x00200000
+	PermissionMuteMembers         = 0x00400000
+	PermissionDeafenMembers       = 0x00800000
+	PermissionMoveMembers         = 0x01000000
+	PermissionUseVAD              = 0x02000000
+	PermissionChangeNickname      = 0x04000000
+	PermissionManageNicknames     = 0x08000000
+	PermissionManageRoles         = 0x10000000
+	PermissionManageWebhooks      = 0x20000000
+	PermissionManageEmojis        = 0x40000000
+)
+
 /*********************/
 /* Resources/Channel */
 /*********************/
@@ -149,7 +184,7 @@ type internalReaction struct {
 	Emoji *Emoji `json:"emoji"`
 }
 
-type internalOverwrite struct {
+type Overwrite struct {
 	ID    Snowflake `json:"id"`
 	Type  string    `json:"type"`
 	Allow int       `json:"allow"`
