@@ -23,6 +23,7 @@ type EndPoint struct {
 var (
 	BaseUrl = "https://discordapp.com/api"
 
+	EndPointGateway      = makeEndPoint("/gateway")
 	EndPointBotGateway   = makeEndPoint("/gateway/bot")
 	EndPointVoiceRegions = makeEndPoint("/voice/regions")
 
@@ -183,7 +184,7 @@ func (s *Session) doRequest(method, url string, body io.Reader, target interface
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", s.tokenType+" "+s.token)
+	req.Header.Add("Authorization", s.tokenType+s.token)
 	req.Header.Add("User-Agent", "DiscordBot (https://github.com/ikkerens/disgo, 1.0.0)")
 
 	if response, err = client.Do(req); err != nil {

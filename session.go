@@ -24,6 +24,31 @@ type Session struct {
 	stateLock    sync.RWMutex
 }
 
+func BuildSelfbotWithToken(token string) (*Session, error) {
+	logger.Trace("BuildSelfbotWithToken() called")
+
+	if token == "" {
+		return nil, errors.New("token cannot be empty")
+	}
+
+	session := &Session{tokenType: "", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
+
+	// Internal event handlers
+	session.registerEventHandler(onGuildMemberUpdate, false)
+	session.registerEventHandler(onGuildMemberAdd, false)
+
+	gateway := gatewayGetResponse{}
+	_, err := session.doRequest("GET", EndPointGateway().Url, nil, &gateway)
+	if err != nil {
+		return nil, err
+	}
+
+	session.wsUrl = gateway.Url + "?v=5&encoding=json"
+	session.shards = make([]*shard, 1)
+
+	return session, nil
+}
+
 func BuildWithBotToken(token string) (*Session, error) {
 	logger.Trace("BuildWithBotToken() called")
 
@@ -31,7 +56,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 		return nil, errors.New("token cannot be empty")
 	}
 
-	session := &Session{tokenType: "Bot", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
+	session := &Session{tokenType: "Bot ", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
 
 	// Internal event handlers
 	session.registerEventHandler(onGuildMemberUpdate, false)
