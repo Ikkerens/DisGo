@@ -68,19 +68,16 @@ func main() {
 					switch f := field.Type.(type) {
 					case *ast.StarExpr:
 						if name := f.X.(*ast.Ident).Name; generate.IsRegisteredType(name) {
-							logger.Warnf("Registering field: %s", field.Names[0].Name)
 							typeDef.RegisteredFields = append(typeDef.RegisteredFields, field.Names[0].Name)
 						}
 					case *ast.ArrayType:
 						switch a := f.Elt.(type) {
 						case *ast.StarExpr:
 							if name := a.X.(*ast.Ident).Name; generate.IsRegisteredType(name) {
-								logger.Warnf("Registering field array: %s", field.Names[0].Name)
 								typeDef.RegisteredArrayFields = append(typeDef.RegisteredArrayFields, field.Names[0].Name)
 							}
 						case *ast.SelectorExpr:
 							if name := a.X.(*ast.Ident).Name; generate.IsRegisteredType(name) {
-								logger.Warnf("Registering field array: %s", field.Names[0].Name)
 								typeDef.RegisteredArrayFields = append(typeDef.RegisteredArrayFields, field.Names[0].Name)
 							}
 						}

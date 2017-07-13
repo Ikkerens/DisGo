@@ -103,7 +103,7 @@ func (*GuildBanAddEvent) eventName() string {
 }
 
 func (e *GuildBanAddEvent) setSession(s *Session) {
-	e.User.session = s
+	e.User.setSession(s)
 }
 
 func (*GuildBanRemoveEvent) eventName() string {
@@ -111,7 +111,7 @@ func (*GuildBanRemoveEvent) eventName() string {
 }
 
 func (e *GuildBanRemoveEvent) setSession(s *Session) {
-	e.User.session = s
+	e.User.setSession(s)
 }
 
 func (*GuildCreateEvent) eventName() string {

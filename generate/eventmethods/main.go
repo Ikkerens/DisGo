@@ -63,7 +63,7 @@ func main() {
 						} else if len(field.Names) == 0 {
 							event.Embed = typ
 							event.EmbedSelf = true
-							event.StarTypes = append(event.StarTypes, registeredEventField{typ, typ, false})
+							event.StarTypes = append(event.StarTypes, registeredEventField{typ, typ, generate.IsRegisteredType(typ)})
 						}
 					case *ast.ArrayType:
 						star, isStar := f.Elt.(*ast.StarExpr)
@@ -95,7 +95,7 @@ func main() {
 		func allocateEvent(eventName string) *Event {
 			var event Event
 
-			// Because encoding/json doesn't initialise embbeded struct pointers properly, we'll also initialise them here
+			// Because encoding/json doesn't initialise embedded struct pointers properly, we'll also initialise them here
 			switch eventName { {{range .}}
 			case "{{.EventName}}":
 				event = &{{.Name}}{ {{if .Embed}} {{.Embed}}: &{{.Embed}}{} {{end}} } {{end}}
