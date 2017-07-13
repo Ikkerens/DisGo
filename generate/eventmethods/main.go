@@ -29,8 +29,9 @@ type eventDeclaration struct {
 }
 
 type registeredEventField struct {
-	FieldName string
-	TypeName  string
+	FieldName  string
+	TypeName   string
+	Registered bool
 }
 
 func main() {
@@ -49,7 +50,7 @@ func main() {
 			if len(fields) == 1 && len(fields[0].Names) == 0 {
 				event.Embed = fields[0].Type.(*ast.StarExpr).X.(*ast.Ident).Name
 				if generate.IsRegisteredType(event.Embed) {
-					event.StarTypes = append(event.StarTypes, registeredEventField{event.Embed, event.Embed})
+					event.StarTypes = append(event.StarTypes, registeredEventField{event.Embed, event.Embed, true})
 				}
 				logger.Infof("%s embeds %s, adding Marshal methods", event.Name, event.Embed)
 			} else {
@@ -58,18 +59,18 @@ func main() {
 					case *ast.StarExpr:
 						typ := f.X.(*ast.Ident).Name
 						if generate.IsRegisteredType(typ) && len(field.Names) == 1 {
-							event.StarTypes = append(event.StarTypes, registeredEventField{field.Names[0].Name, typ})
+							event.StarTypes = append(event.StarTypes, registeredEventField{field.Names[0].Name, typ, true})
 						} else if len(field.Names) == 0 {
 							event.Embed = typ
 							event.EmbedSelf = true
-							event.StarTypes = append(event.StarTypes, registeredEventField{typ, typ})
+							event.StarTypes = append(event.StarTypes, registeredEventField{typ, typ, false})
 						}
 					case *ast.ArrayType:
 						star, isStar := f.Elt.(*ast.StarExpr)
 						if isStar {
 							typ := star.X.(*ast.Ident).Name
 							if generate.IsRegisteredType(typ) {
-								event.ArrayTypes = append(event.ArrayTypes, registeredEventField{field.Names[0].Name, typ})
+								event.ArrayTypes = append(event.ArrayTypes, registeredEventField{field.Names[0].Name, typ, true})
 							}
 						}
 					}
@@ -111,8 +112,9 @@ func main() {
 				return "{{.EventName}}"
 			}
 
-			func (e *{{.Name}}) setSession(s *Session) { {{range .StarTypes}}
-					e.{{.FieldName}}.session = s {{end}}
+			func (e *{{.Name}}) setSession(s *Session) { {{range .StarTypes}} {{if .Registered}}
+					e.{{.FieldName}}.setSession(s) {{else}}
+					e.{{.FieldName}}.session = s {{end}} {{end}}
 				{{range .ArrayTypes}} for _, item := range e.{{.FieldName}} {
 						item.session = s
 					}

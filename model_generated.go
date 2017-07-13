@@ -93,6 +93,7 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 
 func (s *Channel) setSession(session *Session) {
 	s.session = session
+	s.internal.Recipient.session = session
 }
 
 // ID is used to export the ID from this struct.
@@ -299,6 +300,12 @@ func (s *Guild) UnmarshalJSON(b []byte) error {
 
 func (s *Guild) setSession(session *Session) {
 	s.session = session
+	for _, sub := range s.internal.Roles {
+		sub.session = session
+	}
+	for _, sub := range s.internal.Channels {
+		sub.session = session
+	}
 }
 
 // ID is used to export the ID from this struct.
@@ -573,6 +580,13 @@ func (s *Message) UnmarshalJSON(b []byte) error {
 
 func (s *Message) setSession(session *Session) {
 	s.session = session
+	s.internal.Author.session = session
+	for _, sub := range s.internal.Mentions {
+		sub.session = session
+	}
+	for _, sub := range s.internal.MentionRoles {
+		sub.session = session
+	}
 }
 
 // ID is used to export the ID from this struct.

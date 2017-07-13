@@ -28,6 +28,9 @@ type internalType struct {
 	Exported  string
 	StateType bool
 	Fields    []internalField
+
+	RegisteredFields      []string
+	RegisteredArrayFields []string
 }
 
 func main() {
@@ -49,7 +52,7 @@ func main() {
 			structDef, ok := typ.Type.(*ast.StructType)
 
 			if ok {
-				typeDef := internalType{name, name[8:], generate.IsRegisteredType(name[8:]), make([]internalField, 0)}
+				typeDef := internalType{name, name[8:], generate.IsRegisteredType(name[8:]), make([]internalField, 0), make([]string, 0), make([]string, 0)}
 				logger.Infof("Creating API struct for %s with name %s.", typeDef.Name, typeDef.Exported)
 				for _, field := range structDef.Fields.List {
 					typeStr, err := determineType(field.Type)
@@ -61,6 +64,27 @@ func main() {
 					iField := internalField{field.Names[0].Name, typeStr}
 					typeDef.Fields = append(typeDef.Fields, iField)
 					logger.Infof("Adding func %s() with return type %s to %s.", iField.Name, iField.TypeStr, typeDef.Exported)
+
+					switch f := field.Type.(type) {
+					case *ast.StarExpr:
+						if name := f.X.(*ast.Ident).Name; generate.IsRegisteredType(name) {
+							logger.Warnf("Registering field: %s", field.Names[0].Name)
+							typeDef.RegisteredFields = append(typeDef.RegisteredFields, field.Names[0].Name)
+						}
+					case *ast.ArrayType:
+						switch a := f.Elt.(type) {
+						case *ast.StarExpr:
+							if name := a.X.(*ast.Ident).Name; generate.IsRegisteredType(name) {
+								logger.Warnf("Registering field array: %s", field.Names[0].Name)
+								typeDef.RegisteredArrayFields = append(typeDef.RegisteredArrayFields, field.Names[0].Name)
+							}
+						case *ast.SelectorExpr:
+							if name := a.X.(*ast.Ident).Name; generate.IsRegisteredType(name) {
+								logger.Warnf("Registering field array: %s", field.Names[0].Name)
+								typeDef.RegisteredArrayFields = append(typeDef.RegisteredArrayFields, field.Names[0].Name)
+							}
+						}
+					}
 				}
 
 				types = append(types, typeDef)
@@ -117,7 +141,11 @@ func main() {
 
 			{{if .StateType}}
 			func (s *{{.Exported}}) setSession(session *Session) {
-				s.session = session
+				s.session = session {{range .RegisteredFields}}
+				s.internal.{{.}}.session = session{{end}} {{range .RegisteredArrayFields}}
+				for _, sub := range s.internal.{{.}} {
+					sub.session = session
+				} {{end}}
 			}{{end}}
 
 			{{$p := .}}

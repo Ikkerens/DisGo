@@ -79,7 +79,7 @@ func (*ChannelCreateEvent) eventName() string {
 }
 
 func (e *ChannelCreateEvent) setSession(s *Session) {
-	e.Channel.session = s
+	e.Channel.setSession(s)
 }
 
 func (*ChannelDeleteEvent) eventName() string {
@@ -87,7 +87,7 @@ func (*ChannelDeleteEvent) eventName() string {
 }
 
 func (e *ChannelDeleteEvent) setSession(s *Session) {
-	e.Channel.session = s
+	e.Channel.setSession(s)
 }
 
 func (*ChannelUpdateEvent) eventName() string {
@@ -95,7 +95,7 @@ func (*ChannelUpdateEvent) eventName() string {
 }
 
 func (e *ChannelUpdateEvent) setSession(s *Session) {
-	e.Channel.session = s
+	e.Channel.setSession(s)
 }
 
 func (*GuildBanAddEvent) eventName() string {
@@ -119,7 +119,7 @@ func (*GuildCreateEvent) eventName() string {
 }
 
 func (e *GuildCreateEvent) setSession(s *Session) {
-	e.Guild.session = s
+	e.Guild.setSession(s)
 }
 
 func (*GuildDeleteEvent) eventName() string {
@@ -127,7 +127,7 @@ func (*GuildDeleteEvent) eventName() string {
 }
 
 func (e *GuildDeleteEvent) setSession(s *Session) {
-	e.Guild.session = s
+	e.Guild.setSession(s)
 }
 
 func (*GuildEmojisUpdateEvent) eventName() string {
@@ -157,7 +157,7 @@ func (*GuildMemberRemoveEvent) eventName() string {
 }
 
 func (e *GuildMemberRemoveEvent) setSession(s *Session) {
-	e.User.session = s
+	e.User.setSession(s)
 }
 
 func (*GuildMemberUpdateEvent) eventName() string {
@@ -165,7 +165,7 @@ func (*GuildMemberUpdateEvent) eventName() string {
 }
 
 func (e *GuildMemberUpdateEvent) setSession(s *Session) {
-	e.User.session = s
+	e.User.setSession(s)
 }
 
 func (*GuildMembersChunkEvent) eventName() string {
@@ -180,7 +180,7 @@ func (*GuildRoleCreateEvent) eventName() string {
 }
 
 func (e *GuildRoleCreateEvent) setSession(s *Session) {
-	e.Role.session = s
+	e.Role.setSession(s)
 }
 
 func (*GuildRoleDeleteEvent) eventName() string {
@@ -195,7 +195,7 @@ func (*GuildRoleUpdateEvent) eventName() string {
 }
 
 func (e *GuildRoleUpdateEvent) setSession(s *Session) {
-	e.Role.session = s
+	e.Role.setSession(s)
 }
 
 func (*GuildUpdateEvent) eventName() string {
@@ -203,7 +203,7 @@ func (*GuildUpdateEvent) eventName() string {
 }
 
 func (e *GuildUpdateEvent) setSession(s *Session) {
-	e.Guild.session = s
+	e.Guild.setSession(s)
 }
 
 func (*MessageCreateEvent) eventName() string {
@@ -211,7 +211,7 @@ func (*MessageCreateEvent) eventName() string {
 }
 
 func (e *MessageCreateEvent) setSession(s *Session) {
-	e.Message.session = s
+	e.Message.setSession(s)
 }
 
 func (*MessageDeleteBulkEvent) eventName() string {
@@ -247,7 +247,7 @@ func (*MessageUpdateEvent) eventName() string {
 }
 
 func (e *MessageUpdateEvent) setSession(s *Session) {
-	e.Message.session = s
+	e.Message.setSession(s)
 }
 
 func (*PresenceUpdateEvent) eventName() string {
@@ -262,7 +262,7 @@ func (*ReadyEvent) eventName() string {
 }
 
 func (e *ReadyEvent) setSession(s *Session) {
-	e.User.session = s
+	e.User.setSession(s)
 	for _, item := range e.Guilds {
 		item.session = s
 	}
@@ -287,5 +287,5 @@ func (*UserUpdateEvent) eventName() string {
 }
 
 func (e *UserUpdateEvent) setSession(s *Session) {
-	e.User.session = s
+	e.User.setSession(s)
 }
