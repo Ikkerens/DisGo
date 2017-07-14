@@ -38,7 +38,7 @@ func BuildSelfbotWithToken(token string) (*Session, error) {
 	session.registerEventHandler(onGuildMemberAdd, false)
 
 	gateway := gatewayGetResponse{}
-	_, err := session.doRequest("GET", EndPointGateway().Url, nil, &gateway)
+	_, err := session.doRequest("GET", EndPointGateway().Url, "", nil, &gateway)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 	session.registerEventHandler(onGuildMemberAdd, false)
 
 	gateway := gatewayGetResponse{}
-	_, err := session.doRequest("GET", EndPointBotGateway().Url, nil, &gateway)
+	_, err := session.doRequest("GET", EndPointBotGateway().Url, "", nil, &gateway)
 	if err != nil {
 		return nil, err
 	}

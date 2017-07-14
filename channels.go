@@ -2,7 +2,9 @@ package disgo
 
 import (
 	"fmt"
+	"io"
 	"math"
+	"mime/multipart"
 )
 
 func (s *Session) BuildChannel(guildID Snowflake, name string) *ChannelBuilder {
@@ -39,6 +41,24 @@ func (s *Session) SendEmbed(channelID Snowflake, embed Embed) (*Message, error) 
 
 func (s *Session) SendEmbeddedMessage(channelID Snowflake, content string, embed Embed) (*Message, error) {
 	return s.sendMessageInternal(s.doHttpPost, EndPointMessages(channelID), &sendMessageBody{Content: content, Embed: &embed})
+}
+
+func (s *Session) SendFile(channelID Snowflake, filename string, file io.Reader) (*Message, error) {
+	message := &Message{}
+	err := s.doHttMultipartPost(EndPointMessages(channelID), func(writer *multipart.Writer) {
+		writer.WriteField("content", "")
+		if fileW, err := writer.CreateFormFile("file", filename); err == nil {
+			io.Copy(fileW, file)
+		}
+	}, message)
+	if err != nil {
+		return nil, err
+	}
+	message = objects.registerMessage(message)
+	if message.session == nil {
+		message.session = s
+	}
+	return message, nil
 }
 
 func (s *Session) EditMessage(channelID, messageID Snowflake, content string) (*Message, error) {

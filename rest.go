@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/slf4go/logger"
+	"mime/multipart"
 )
 
 type EndPoint struct {
@@ -124,21 +125,21 @@ func makeEndPoint(path string) func(ids ...Snowflake) EndPoint {
 
 func (s *Session) doHttpGet(endPoint EndPoint, target interface{}) (err error) {
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
-		return s.doRequest("GET", endPoint.Url, nil, target)
+		return s.doRequest("GET", endPoint.Url, "", nil, target)
 	})
 	return
 }
 
 func (s *Session) doHttpDelete(endPoint EndPoint, target interface{}) (err error) {
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
-		return s.doRequest("DELETE", endPoint.Url, nil, target)
+		return s.doRequest("DELETE", endPoint.Url, "", nil, target)
 	})
 	return
 }
 
 func (s *Session) doHttpPut(endPoint EndPoint, target interface{}) (err error) {
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
-		return s.doRequest("PUT", endPoint.Url, nil, target)
+		return s.doRequest("PUT", endPoint.Url, "", nil, target)
 	})
 	return
 }
@@ -149,9 +150,23 @@ func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err e
 	if err == nil {
 		byteBuf := bytes.NewReader(jsonBody)
 		err = s.rateLimit(endPoint, func() (*http.Response, error) {
-			return s.doRequest("POST", endPoint.Url, byteBuf, target)
+			return s.doRequest("POST", endPoint.Url, "application/json", byteBuf, target)
 		})
 	}
+
+	return
+}
+
+func (s *Session) doHttMultipartPost(endPoint EndPoint, bodyWriter func(writer *multipart.Writer), target interface{}) (err error) {
+	var buffer bytes.Buffer
+	mpW := multipart.NewWriter(&buffer)
+
+	bodyWriter(mpW)
+	mpW.Close()
+
+	err = s.rateLimit(endPoint, func() (*http.Response, error) {
+		return s.doRequest("POST", endPoint.Url, mpW.FormDataContentType(), &buffer, target)
+	})
 
 	return
 }
@@ -162,14 +177,14 @@ func (s *Session) doHttpPatch(endPoint EndPoint, body, target interface{}) (err 
 	if err == nil {
 		byteBuf := bytes.NewReader(jsonBody)
 		err = s.rateLimit(endPoint, func() (*http.Response, error) {
-			return s.doRequest("PATCH", endPoint.Url, byteBuf, target)
+			return s.doRequest("PATCH", endPoint.Url, "application/json", byteBuf, target)
 		})
 	}
 
 	return
 }
 
-func (s *Session) doRequest(method, url string, body io.Reader, target interface{}) (response *http.Response, err error) {
+func (s *Session) doRequest(method, url string, contentType string, body io.Reader, target interface{}) (response *http.Response, err error) {
 	logger.Debugf("HTTP %s %s", method, strings.Replace(url, BaseUrl, "", 1))
 
 	var (
@@ -183,20 +198,23 @@ func (s *Session) doRequest(method, url string, body io.Reader, target interface
 		return
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	if contentType != "" {
+		req.Header.Add("Content-Type", contentType)
+	}
 	req.Header.Add("Authorization", s.tokenType+s.token)
 	req.Header.Add("User-Agent", "DiscordBot (https://github.com/ikkerens/disgo, 1.0.0)")
 
 	if response, err = client.Do(req); err != nil {
+		logger.ErrorE(err)
 		return
 	}
 
 	defer response.Body.Close()
 
 	switch response.StatusCode {
-	case 200:
+	case http.StatusOK:
 		fallthrough
-	case 201:
+	case http.StatusCreated:
 		if target != nil {
 			body := response.Body
 			defer body.Close()
@@ -204,9 +222,9 @@ func (s *Session) doRequest(method, url string, body io.Reader, target interface
 				return
 			}
 		}
-	case 204:
+	case http.StatusNoContent:
 		fallthrough
-	case 304:
+	case http.StatusNotModified:
 		return
 	default:
 		var bodyBuf []byte
