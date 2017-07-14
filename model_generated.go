@@ -302,11 +302,15 @@ func (s *Guild) UnmarshalJSON(b []byte) error {
 
 func (s *Guild) setSession(session *Session) {
 	s.session = session
-	for _, sub := range s.internal.Roles {
-		sub.session = session
+	if s.internal.Roles != nil {
+		for _, sub := range s.internal.Roles {
+			sub.session = session
+		}
 	}
-	for _, sub := range s.internal.Channels {
-		sub.session = session
+	if s.internal.Channels != nil {
+		for _, sub := range s.internal.Channels {
+			sub.session = session
+		}
 	}
 }
 
@@ -585,11 +589,15 @@ func (s *Message) setSession(session *Session) {
 	if s.internal.Author != nil {
 		s.internal.Author.session = session
 	}
-	for _, sub := range s.internal.Mentions {
-		sub.session = session
+	if s.internal.Mentions != nil {
+		for _, sub := range s.internal.Mentions {
+			sub.session = session
+		}
 	}
-	for _, sub := range s.internal.MentionRoles {
-		sub.session = session
+	if s.internal.MentionRoles != nil {
+		for _, sub := range s.internal.MentionRoles {
+			sub.session = session
+		}
 	}
 }
 

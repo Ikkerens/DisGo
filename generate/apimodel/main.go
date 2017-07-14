@@ -142,9 +142,11 @@ func main() {
 				if s.internal.{{.}} != nil {
 					s.internal.{{.}}.session = session
 				} {{end}} {{range .RegisteredArrayFields}}
-				for _, sub := range s.internal.{{.}} {
-					sub.session = session
-				} {{end}}
+				if s.internal.{{.}} != nil {
+					for _, sub := range s.internal.{{.}} {
+						sub.session = session
+					}
+				}{{end}}
 			}{{end}}
 
 			{{$p := .}}
