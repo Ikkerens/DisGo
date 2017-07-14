@@ -139,7 +139,9 @@ func main() {
 			{{if .StateType}}
 			func (s *{{.Exported}}) setSession(session *Session) {
 				s.session = session {{range .RegisteredFields}}
-				s.internal.{{.}}.session = session{{end}} {{range .RegisteredArrayFields}}
+				if s.internal.{{.}} != nil {
+					s.internal.{{.}}.session = session
+				} {{end}} {{range .RegisteredArrayFields}}
 				for _, sub := range s.internal.{{.}} {
 					sub.session = session
 				} {{end}}

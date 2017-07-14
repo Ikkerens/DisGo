@@ -8,7 +8,7 @@ import "github.com/slf4go/logger"
 func allocateEvent(eventName string) *Event {
 	var event Event
 
-	// Because encoding/json doesn't initialise embbeded struct pointers properly, we'll also initialise them here
+	// Because encoding/json doesn't initialise embedded struct pointers properly, we'll also initialise them here
 	switch eventName {
 	case "CHANNEL_CREATE":
 		event = &ChannelCreateEvent{Channel: &Channel{}}

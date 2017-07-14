@@ -93,7 +93,9 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 
 func (s *Channel) setSession(session *Session) {
 	s.session = session
-	s.internal.Recipient.session = session
+	if s.internal.Recipient != nil {
+		s.internal.Recipient.session = session
+	}
 }
 
 // ID is used to export the ID from this struct.
@@ -580,7 +582,9 @@ func (s *Message) UnmarshalJSON(b []byte) error {
 
 func (s *Message) setSession(session *Session) {
 	s.session = session
-	s.internal.Author.session = session
+	if s.internal.Author != nil {
+		s.internal.Author.session = session
+	}
 	for _, sub := range s.internal.Mentions {
 		sub.session = session
 	}
