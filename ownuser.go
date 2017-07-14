@@ -17,7 +17,12 @@ func (s *Session) SetUsername(username string) (*User, error) {
 }
 
 func (s *Session) SetAvatar(imageMimeType string, reader io.Reader) (*User, error) {
-	bytes, _ := ioutil.ReadAll(reader)
+	bytes, err := ioutil.ReadAll(reader)
+
+	if err != nil {
+		return nil, err
+	}
+
 	encoded := base64.StdEncoding.EncodeToString(bytes)
 	return s.modifyCurrentUser(modifyCurrentUser{Avatar: fmt.Sprintf("data:%s;base64,%s", imageMimeType, encoded)})
 }
