@@ -169,7 +169,7 @@ type internalMessage struct {
 	TTS             bool         `json:"tts"`
 	MentionEveryone bool         `json:"mention_everyone"`
 	Mentions        []*User      `json:"mentions"`
-	MentionRoles    []*Role      `json:"mention_roles"`
+	MentionRoles    []Snowflake  `json:"mention_roles"`
 	Attachments     []Attachment `json:"attachments"`
 	Embeds          []Embed      `json:"embeds"`
 	Reactions       []Reaction   `json:"reactions"`
