@@ -51,7 +51,7 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	response, err := call()
 	now = time.Now()
 
-	if err != nil {
+	if response.StatusCode != http.StatusTooManyRequests && err != nil {
 		return err
 	}
 
@@ -65,7 +65,7 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	)
 
 	// Are we being rate limited because of that last request?
-	if response.StatusCode == 429 {
+	if response.StatusCode == http.StatusTooManyRequests {
 		if headerRetryAfter == "" {
 			return errors.New("We are being ratelimited, but Discord didn't send a Retry-After header")
 		}
