@@ -594,11 +594,6 @@ func (s *Message) setSession(session *Session) {
 			sub.session = session
 		}
 	}
-	if s.internal.MentionRoles != nil {
-		for _, sub := range s.internal.MentionRoles {
-			sub.session = session
-		}
-	}
 }
 
 // ID is used to export the ID from this struct.
@@ -674,7 +669,7 @@ func (s *Message) Mentions() []*User {
 }
 
 // MentionRoles is used to export the MentionRoles from this struct.
-func (s *Message) MentionRoles() []*Role {
+func (s *Message) MentionRoles() []Snowflake {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 

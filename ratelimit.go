@@ -18,6 +18,10 @@ type rateBucket struct {
 }
 
 func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, error)) error {
+	return s.rateLimitRecursive(endPoint, call, false)
+}
+
+func (s *Session) rateLimitRecursive(endPoint EndPoint, call func() (*http.Response, error), recursive bool) error {
 	// Get the bucket, and if it does not exist, create it.
 	bucket, exists := s.rateLimitBuckets[endPoint.bucket]
 	if !exists {
@@ -26,8 +30,10 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	}
 
 	// Lock this bucket
-	bucket.mutex.Lock()
-	defer bucket.mutex.Unlock()
+	if !recursive {
+		bucket.mutex.Lock()
+		defer bucket.mutex.Unlock()
+	}
 
 	// Wait for the bucket to expire if we're out of attempts
 	now := time.Now()
@@ -37,8 +43,10 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	}
 
 	// Once we're past the bucket lock, lock globally
-	s.globalRateLimit.Lock()
-	defer s.globalRateLimit.Unlock()
+	if !recursive {
+		s.globalRateLimit.Lock()
+		defer s.globalRateLimit.Unlock()
+	}
 
 	// Wait for the globalRateLimit lock if we're being globally rate limited
 	now = time.Now()
@@ -51,26 +59,47 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 	response, err := call()
 	now = time.Now()
 
+	// Not all returned error status codes include rate limit headers, if that is the case we return now
 	if err != nil {
-		return err
+		switch response.StatusCode {
+		case http.StatusBadRequest:
+			fallthrough
+		case http.StatusUnauthorized:
+			fallthrough
+		case http.StatusForbidden:
+			fallthrough
+		case http.StatusMethodNotAllowed:
+			return err
+		}
+
+		if response.StatusCode > 500 {
+			return err
+		}
 	}
 
 	// Read the headers
 	var (
-		headerRemaining  = response.Header.Get("X-RateLimit-Remaining")
-		headerLimit      = response.Header.Get("X-RateLimit-Limit")
-		headerReset      = response.Header.Get("X-RateLimit-Reset")
-		headerRetryAfter = response.Header.Get("Retry-After")
-		headerGlobal     = response.Header.Get("X-RateLimit-Global")
+		headerDiscordTime = response.Header.Get("Date")
+		headerRemaining   = response.Header.Get("X-RateLimit-Remaining")
+		headerLimit       = response.Header.Get("X-RateLimit-Limit")
+		headerReset       = response.Header.Get("X-RateLimit-Reset")
+		headerRetryAfter  = response.Header.Get("Retry-After")
+		headerGlobal      = response.Header.Get("X-RateLimit-Global")
 	)
 
+	logger.Tracef("Ratelimit headers: remaining: %s, limit: %s, reset: %s, retryAfter: %s", headerRemaining, headerLimit, headerReset, headerRetryAfter)
+
 	// Are we being rate limited because of that last request?
-	if response.StatusCode == 429 {
+	if response.StatusCode == http.StatusTooManyRequests {
 		if headerRetryAfter == "" {
 			return errors.New("We are being ratelimited, but Discord didn't send a Retry-After header")
 		}
 
-		retryAfter, _ := strconv.Atoi(headerRetryAfter)
+		retryAfter, err := strconv.Atoi(headerRetryAfter)
+		if err != nil {
+			return err
+		}
+
 		resetTime := now.Add(time.Duration(retryAfter) * time.Millisecond)
 
 		if headerGlobal == "true" {
@@ -82,39 +111,45 @@ func (s *Session) rateLimit(endPoint EndPoint, call func() (*http.Response, erro
 			bucket.remaining = 0
 		}
 
-		// Automatically queue a retry, but this one will wait for the timers to expire
-		bucket.mutex.Unlock() // Unlock the mutexes so the recursive call can lock them
-		s.globalRateLimit.Unlock()
-		err := s.rateLimit(endPoint, call)
-		bucket.mutex.Lock() // Re-lock them to prevent the deferred unlock calls from panicking
-		s.globalRateLimit.Lock()
-		return err
+		return s.rateLimitRecursive(endPoint, call, true)
 	}
 
-	var parseError error
 	// Nope, not rate limited, but let's update our bucket first
+	var parseError error
 	if headerRemaining != "" {
 		bucket.remaining, parseError = strconv.Atoi(headerRemaining)
+		if parseError != nil {
+			return parseError
+		}
 	}
 	if headerLimit != "" {
 		bucket.limit, parseError = strconv.Atoi(headerLimit)
+		if parseError != nil {
+			return parseError
+		}
 	}
 	if endPoint.resetTime == -1 {
 		if headerReset != "" {
-			var unix int64
-			unix, parseError = strconv.ParseInt(headerReset, 10, 64)
-			if parseError == nil {
-				bucket.reset = time.Unix(unix, 0)
+			unix, parseError := strconv.ParseInt(headerReset, 10, 64)
+			if parseError != nil {
+				return parseError
+			}
+			resetTime := time.Unix(unix, 0)
+
+			if headerDiscordTime == "" {
+				bucket.reset = resetTime
+			} else {
+				discordTime, parseError := time.Parse(time.RFC1123, headerDiscordTime)
+				if parseError != nil {
+					return parseError
+				}
+				bucket.reset = now.Add(resetTime.Sub(discordTime))
 			}
 		}
 	} else {
 		bucket.reset = now.Add(time.Duration(endPoint.resetTime) * time.Millisecond)
 	}
 
-	// Check for errors
-	if err != nil {
-		return err // If the call previously errored, return that now (we still wanted to try and read the headers
-	}
-
-	return parseError
+	// If we did encounter a http response that did include ratelimit headers, we return here after reading the headers
+	return err
 }

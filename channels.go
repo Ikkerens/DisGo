@@ -1,6 +1,7 @@
 package disgo
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -47,6 +48,25 @@ func (s *Session) SendFile(channelID Snowflake, filename string, file io.Reader)
 	message := &Message{}
 	err := s.doHttMultipartPost(EndPointMessages(channelID), func(writer *multipart.Writer) {
 		writer.WriteField("content", "")
+		if fileW, err := writer.CreateFormFile("file", filename); err == nil {
+			io.Copy(fileW, file)
+		}
+	}, message)
+	if err != nil {
+		return nil, err
+	}
+	message = objects.registerMessage(message)
+	if message.session == nil {
+		message.session = s
+	}
+	return message, nil
+}
+
+func (s *Session) SendFileEmbed(channelID Snowflake, filename string, file io.Reader, embed Embed) (*Message, error) {
+	message := &Message{}
+	err := s.doHttMultipartPost(EndPointMessages(channelID), func(writer *multipart.Writer) {
+		jsonPayload, _ := json.Marshal(sendMessageBody{Embed: &embed})
+		writer.WriteField("payload_json", string(jsonPayload))
 		if fileW, err := writer.CreateFormFile("file", filename); err == nil {
 			io.Copy(fileW, file)
 		}
@@ -143,6 +163,13 @@ func (s *Session) GetMessages(channelID Snowflake, mode GetMessagesMode, target 
 		return nil, err
 	}
 
+	for _, message := range messages {
+		objects.registerMessage(message)
+		if message.session == nil {
+			message.session = s
+		}
+	}
+
 	return messages, nil
 }
 
@@ -175,6 +202,14 @@ func (s *Session) BulkDeleteMessages(channelID Snowflake, ids []Snowflake) error
 	return s.doHttpPost(EndPointMessageBulkDelete(channelID), struct {
 		Messages []Snowflake `json:"messages"`
 	}{ids}, nil)
+}
+
+func (s *Session) PinMessage(channelID, messageID Snowflake) error {
+	return s.doHttpPut(EndPointChannelPin(channelID, messageID), nil)
+}
+
+func (s *Message) Pin() error {
+	return s.session.PinMessage(s.internal.ChannelID, s.internal.ID)
 }
 
 func (s *Session) MessageAddReaction(channelID, messageID Snowflake, emoji string) error {
