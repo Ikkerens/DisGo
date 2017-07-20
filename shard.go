@@ -162,7 +162,7 @@ func (s *shard) mainLoop() {
 				go s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
 				sentHeartBeat = true
 			} else {
-				go s.disconnect(websocket.CloseAbnormalClosure, "Did not respond to previous heartbeat")
+				go s.disconnect(websocket.CloseNoStatusReceived, "Did not respond to previous heartbeat")
 			}
 		case <-s.stopListen:
 			return
@@ -216,7 +216,7 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 						s.closeMessage <- closeErr.Code
 					}
 					logger.ErrorE(err)
-					go s.disconnect(websocket.CloseAbnormalClosure, err.Error())
+					go s.disconnect(websocket.CloseProtocolError, err.Error())
 				}
 				<-s.stopRead // Wait for the connection to be closed
 				return
