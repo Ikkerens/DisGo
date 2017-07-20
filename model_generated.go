@@ -93,8 +93,10 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 
 func (s *Channel) setSession(session *Session) {
 	s.session = session
-	if s.internal.Recipient != nil {
-		s.internal.Recipient.session = session
+	if s.internal.Recipients != nil {
+		for _, sub := range s.internal.Recipients {
+			sub.session = session
+		}
 	}
 }
 
@@ -123,7 +125,7 @@ func (s *Channel) Name() string {
 }
 
 // Type is used to export the Type from this struct.
-func (s *Channel) Type() string {
+func (s *Channel) Type() ChannelType {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -136,14 +138,6 @@ func (s *Channel) Position() int {
 	defer s.lock.RUnlock()
 
 	return s.internal.Position
-}
-
-// IsPrivate is used to export the IsPrivate from this struct.
-func (s *Channel) IsPrivate() bool {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	return s.internal.IsPrivate
 }
 
 // PermissionOverwrites is used to export the PermissionOverwrites from this struct.
@@ -186,12 +180,12 @@ func (s *Channel) UserLimit() int {
 	return s.internal.UserLimit
 }
 
-// Recipient is used to export the Recipient from this struct.
-func (s *Channel) Recipient() *User {
+// Recipients is used to export the Recipients from this struct.
+func (s *Channel) Recipients() []*User {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	return s.internal.Recipient
+	return s.internal.Recipients
 }
 
 // Emoji is based on the Discord object with the same name.
@@ -722,6 +716,14 @@ func (s *Message) WebhookID() string {
 	defer s.lock.RUnlock()
 
 	return s.internal.WebhookID
+}
+
+// Type is used to export the Type from this struct.
+func (s *Message) Type() MessageType {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.internal.Type
 }
 
 // Presence is based on the Discord object with the same name.

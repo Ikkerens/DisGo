@@ -142,13 +142,22 @@ func (t *DiscordTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Time)
 }
 
+type ChannelType int
+
+const (
+	ChannelTypeGuildText ChannelType = iota
+	ChannelTypeDirectMessage
+	ChannelTypeGuildVoice
+	ChannelTypeGroupDirectMessage
+	ChannelTypeGuildCategory
+)
+
 type internalChannel struct {
 	ID                   Snowflake   `json:"id"`
 	GuildID              Snowflake   `json:"guild_id"`
 	Name                 string      `json:"name"`
-	Type                 string      `json:"type"`
+	Type                 ChannelType `json:"type,int"`
 	Position             int         `json:"position"`
-	IsPrivate            bool        `json:"is_private"`
 	PermissionOverwrites []Overwrite `json:"permission_overwrites"`
 	Topic                string      `json:"topic"`
 	LastMessageID        Snowflake   `json:"last_message_id,omitempty"`
@@ -156,8 +165,21 @@ type internalChannel struct {
 	UserLimit            int         `json:"user_limit"`
 
 	// DMChannel
-	Recipient *User `json:"recipient"`
+	Recipients []*User `json:"recipients"`
 }
+
+type MessageType int
+
+const (
+	MessageTypeDefault MessageType = iota
+	MessageTypeRecipientAdd
+	MessageTypeRecipientRemove
+	MessageTypeCall
+	MessageTypeChannelNameChange
+	MessageTypeChannelIconChange
+	MessageTypeChannelPinnedMessage
+	MessageTypeGuildMemberJoin
+)
 
 type internalMessage struct {
 	ID              Snowflake    `json:"id"`
@@ -176,6 +198,7 @@ type internalMessage struct {
 	NOnce           Snowflake    `json:"nonce"`
 	Pinned          bool         `json:"pinned"`
 	WebhookID       string       `json:"webhook_id"`
+	Type            MessageType  `json:"type,int"`
 }
 
 type internalReaction struct {

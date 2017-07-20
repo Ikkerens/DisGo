@@ -43,7 +43,7 @@ func BuildSelfbotWithToken(token string) (*Session, error) {
 		return nil, err
 	}
 
-	session.wsUrl = gateway.Url + "?v=5&encoding=json"
+	session.wsUrl = gateway.Url + "?v=6&encoding=json"
 	session.shards = make([]*shard, 1)
 
 	return session, nil
@@ -70,7 +70,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 		return nil, err
 	}
 
-	session.wsUrl = gateway.Url + "?v=5&encoding=json"
+	session.wsUrl = gateway.Url + "?v=6&encoding=json"
 	session.shards = make([]*shard, gateway.Shards)
 
 	return session, nil
