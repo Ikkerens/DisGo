@@ -20,6 +20,10 @@ func ParseSnowflake(str string) (Snowflake, error) {
 	return Snowflake(intVal), err
 }
 
+func (s Snowflake) Timestamp() time.Time {
+	return time.Unix(((int64(s)>>22)+1420070400000)/1000, 0)
+}
+
 func (s Snowflake) String() string {
 	return strconv.FormatUint(uint64(s), 10)
 }

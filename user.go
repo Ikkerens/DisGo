@@ -1,6 +1,13 @@
 package disgo
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+func (s *User) DiscordJoinDate() time.Time {
+	return s.internal.ID.Timestamp()
+}
 
 func (s *User) AvatarURL() string {
 	if s.internal.AvatarHash == "" {
