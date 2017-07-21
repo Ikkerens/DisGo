@@ -253,7 +253,10 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 	}
 
 	frame := receivedFrame{Sequence: -1}
-	json.NewDecoder(reader).Decode(&frame)
+	err = json.NewDecoder(reader).Decode(&frame)
+	if err != nil {
+		return nil, err
+	}
 
 	logger.Debugf("Received frame with opCode: %d", frame.Op)
 
