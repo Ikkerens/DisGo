@@ -21,7 +21,8 @@ func ParseSnowflake(str string) (Snowflake, error) {
 }
 
 func (s Snowflake) Timestamp() time.Time {
-	return time.Unix(((int64(s)>>22)+1420070400000)/1000, 0)
+	const discordEpoch int64 = 1420070400000
+	return time.Unix(((int64(s)>>22)+discordEpoch)/1000, 0)
 }
 
 func (s Snowflake) String() string {
