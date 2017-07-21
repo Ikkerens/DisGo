@@ -217,7 +217,7 @@ func (s *Emoji) Name() string {
 }
 
 // Roles is used to export the Roles from this struct.
-func (s *Emoji) Roles() []*Role {
+func (s *Emoji) Roles() []Snowflake {
 	return s.internal.Roles
 }
 
@@ -421,7 +421,7 @@ func (s *Guild) Emojis() []Emoji {
 }
 
 // Features is used to export the Features from this struct.
-func (s *Guild) Features() []json.RawMessage {
+func (s *Guild) Features() []string {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 

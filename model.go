@@ -308,7 +308,7 @@ type internalGuild struct {
 	DefaultMessageNotifications int               `json:"default_message_notifications"`
 	Roles                       []*Role           `json:"roles"`
 	Emojis                      []Emoji           `json:"emojis"`
-	Features                    []json.RawMessage `json:"features"`
+	Features                    []string          `json:"features"`
 	MFALevel                    int               `json:"mfa_level"`
 	JoinedAt                    DiscordTime       `json:"joined_at"`
 	Large                       bool              `json:"large"`
@@ -330,11 +330,11 @@ type internalGuildMember struct {
 }
 
 type internalEmoji struct {
-	ID            Snowflake `json:"id,omitempty"`
-	Name          string    `json:"name"`
-	Roles         []*Role   `json:"roles"`
-	RequireColons bool      `json:"require_colons"`
-	Managed       bool      `json:"managed"`
+	ID            Snowflake   `json:"id,omitempty"`
+	Name          string      `json:"name"`
+	Roles         []Snowflake `json:"roles"`
+	RequireColons bool        `json:"require_colons"`
+	Managed       bool        `json:"managed"`
 }
 
 /******************/
