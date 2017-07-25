@@ -157,10 +157,7 @@ func (s *shard) identify() error {
 func (s *shard) mainLoop() {
 	logger.Debugf("Starting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
-	defer func() {
-		logger.Warn("Sending close confirmation from read")
-		s.closeConfirmation <- true
-	}()
+	defer func() { s.closeConfirmation <- true }()
 
 	heartbeat := time.NewTicker(time.Duration(s.heartbeat) * time.Millisecond)
 	defer heartbeat.Stop()
@@ -204,10 +201,7 @@ func (s *shard) mainLoop() {
 func (s *shard) readWebSocket(reader chan *receivedFrame) {
 	logger.Debugf("Starting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
-	defer func() {
-		logger.Warn("Sending close confirmation from read")
-		s.closeConfirmation <- true
-	}()
+	defer func() { s.closeConfirmation <- true }()
 
 	for {
 		frame, err := s.readFrame(false)
