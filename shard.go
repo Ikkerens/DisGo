@@ -59,6 +59,7 @@ func newShard(session *Session, shardNum int) (*shard, error) {
 
 // Builds a new connection with Discord, waits for the "hello" frame and then proceeds to identify itself to the Discord service
 func (s *shard) connect() error {
+	// Open the websocket
 	conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
 	if err != nil {
 		return err
@@ -67,7 +68,17 @@ func (s *shard) connect() error {
 	s.webSocket = conn
 	s.webSocket.SetCloseHandler(s.onClose)
 
-	helloFrame, err := s.readFrame(true)
+	// At the end of this function, clean up the socket if we didn't identify correctly.
+	defer func() {
+		if err != nil {
+			conn.Close()
+			s.webSocket = nil
+		}
+	}()
+
+	// Discord always sends a hello frame upon opening the connection
+	var helloFrame *receivedFrame
+	helloFrame, err = s.readFrame(true)
 	if err != nil {
 		return err
 	} else if helloFrame.Op != opHello {
@@ -79,15 +90,21 @@ func (s *shard) connect() error {
 		return err
 	}
 
+	// We've succesfully connected.
 	logger.Debugf("Connected to Discord servers: %s", strings.Join(hello.Servers, ", "))
 	logger.Debugf("Setting up a heartbeat interval of %d ms", hello.HeartbeatInterval)
 	s.heartbeat = hello.HeartbeatInterval
 
+	// Now identify
 	if err = s.identify(); err != nil {
 		return err
 	}
 
+	// Identification succesful, unlock reading/writing and start the goroutines
+	s.readLock.Unlock()
+	s.writeLock.Unlock()
 	go s.mainLoop()
+
 	return nil
 }
 
@@ -135,10 +152,6 @@ func (s *shard) identify() error {
 				fallthrough
 			case "RESUMED":
 				s.session.dispatchEvent(frame)
-
-				s.readLock.Unlock()
-				s.writeLock.Unlock()
-
 				return nil // Break out of the loop, we have what we want
 			default:
 				s.session.dispatchEvent(frame) // Nope, resume action, let's wait for more frames
