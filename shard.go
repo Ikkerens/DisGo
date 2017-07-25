@@ -157,7 +157,10 @@ func (s *shard) identify() error {
 func (s *shard) mainLoop() {
 	logger.Debugf("Starting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
-	defer func() { s.closeConfirmation <- true }()
+	defer func() {
+		logger.Warn("Sending close confirmation from read")
+		s.closeConfirmation <- true
+	}()
 
 	heartbeat := time.NewTicker(time.Duration(s.heartbeat) * time.Millisecond)
 	defer heartbeat.Stop()
@@ -201,13 +204,16 @@ func (s *shard) mainLoop() {
 func (s *shard) readWebSocket(reader chan *receivedFrame) {
 	logger.Debugf("Starting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
-	defer func() { s.closeConfirmation <- true }()
+	defer func() {
+		logger.Warn("Sending close confirmation from read")
+		s.closeConfirmation <- true
+	}()
 
 	for {
 		frame, err := s.readFrame(false)
 		if err != nil {
 			if !s.isShuttingDown {
-				go s.onClose(websocket.CloseAbnormalClosure, err.Error())
+				s.onClose(websocket.CloseAbnormalClosure, err.Error())
 			}
 			return
 		}
@@ -272,19 +278,21 @@ func (s *shard) sendFrame(frame *gatewayFrame, isConnecting bool) {
 
 // Called when we have received a closing intention that we have not initiated (ws close message, recv error)
 func (s *shard) onClose(code int, text string) error {
-	logger.Warnf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
+	go func() {
+		logger.Warnf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 
-	s.isShuttingDown = true
-	s.stopRoutines()
-	s.readLock.Lock()
-	s.writeLock.Lock()
+		s.isShuttingDown = true
+		s.stopRoutines()
+		s.readLock.Lock()
+		s.writeLock.Lock()
 
-	if err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text)); err != nil {
-		logger.Error("Could not confirm close message.")
-		logger.ErrorE(err)
-	}
+		if err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text)); err != nil {
+			logger.Error("Could not confirm close message.")
+			logger.ErrorE(err)
+		}
 
-	s.cleanupWebSocket()
+		s.cleanupWebSocket()
+	}()
 
 	return nil
 }
