@@ -10,6 +10,8 @@ import (
 	"github.com/slf4go/logger"
 )
 
+const gatewayVersion = "6"
+
 type Session struct {
 	token     string
 	tokenType string
@@ -24,18 +26,15 @@ type Session struct {
 	stateLock    sync.RWMutex
 }
 
-func BuildSelfbotWithToken(token string) (*Session, error) {
-	logger.Trace("BuildSelfbotWithToken() called")
+func NewSelfBot(token string) (*Session, error) {
+	logger.Trace("NewSelfBot() called")
 
 	if token == "" {
 		return nil, errors.New("token cannot be empty")
 	}
 
 	session := &Session{tokenType: "", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
-
-	// Internal event handlers
-	session.registerEventHandler(onGuildMemberUpdate, false)
-	session.registerEventHandler(onGuildMemberAdd, false)
+	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
 	_, err := session.doRequest("GET", EndPointGateway().Url, "", nil, &gateway)
@@ -43,26 +42,21 @@ func BuildSelfbotWithToken(token string) (*Session, error) {
 		return nil, err
 	}
 
-	session.wsUrl = gateway.Url + "?v=6&encoding=json"
+	session.wsUrl = gateway.Url + "?v=" + gatewayVersion + "&encoding=json"
 	session.shards = make([]*shard, 1)
 
 	return session, nil
 }
 
-func BuildWithBotToken(token string) (*Session, error) {
-	logger.Trace("BuildWithBotToken() called")
+func NewBot(token string) (*Session, error) {
+	logger.Trace("NewBot() called")
 
 	if token == "" {
 		return nil, errors.New("token cannot be empty")
 	}
 
 	session := &Session{tokenType: "Bot ", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
-
-	// Internal event handlers
-	session.registerEventHandler(onChannelCreate, false)
-	session.registerEventHandler(onChannelDelete, false)
-	session.registerEventHandler(onGuildMemberUpdate, false)
-	session.registerEventHandler(onGuildMemberAdd, false)
+	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
 	_, err := session.doRequest("GET", EndPointBotGateway().Url, "", nil, &gateway)
@@ -70,10 +64,17 @@ func BuildWithBotToken(token string) (*Session, error) {
 		return nil, err
 	}
 
-	session.wsUrl = gateway.Url + "?v=6&encoding=json"
+	session.wsUrl = gateway.Url + "?v=" + gatewayVersion + "&encoding=json"
 	session.shards = make([]*shard, gateway.Shards)
 
 	return session, nil
+}
+
+func registerInternalEvents(session *Session) {
+	session.registerEventHandler(onChannelCreate, false)
+	session.registerEventHandler(onChannelDelete, false)
+	session.registerEventHandler(onGuildMemberUpdate, false)
+	session.registerEventHandler(onGuildMemberAdd, false)
 }
 
 func (s *Session) Connect() error {

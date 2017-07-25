@@ -190,7 +190,7 @@ func (s *Message) EditEmbeddedMessage(content string, embed Embed) (err error) {
 
 func (s *Session) DeleteMessage(channelID, messageID Snowflake) error {
 	endPoint := EndPointMessage(channelID, messageID)
-	endPoint.bucket += "DELETE" // Deleting messages works with a separate ratelimit to allow better moderation
+	endPoint.bucket += "DELETE" // Deleting messages works with a separate rate limit to allow better moderation
 	return s.doHttpDelete(endPoint, nil)
 }
 

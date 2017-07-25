@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	discord, err := disgo.BuildWithBotToken(examples.Token)
+	discord, err := disgo.NewBot(examples.Token)
 	if err != nil {
 		logger.ErrorE(err)
 		return

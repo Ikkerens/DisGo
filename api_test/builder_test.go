@@ -21,7 +21,7 @@ func init() {
 }
 
 func TestMessageCreateDelete(t *testing.T) {
-	discord, err := disgo.BuildWithBotToken(token)
+	discord, err := disgo.NewBot(token)
 	if err != nil {
 		logger.ErrorE(err)
 		t.FailNow()
