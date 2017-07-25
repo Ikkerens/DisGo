@@ -78,7 +78,7 @@ func BuildWithBotToken(token string) (*Session, error) {
 
 func (s *Session) Connect() error {
 	for i := 0; i < cap(s.shards); i++ {
-		shard, err := connectShard(s, i)
+		shard, err := newShard(s, i)
 		if err != nil {
 			s.closeShards(websocket.CloseGoingAway, fmt.Sprintf("Error occurred on shard [%d/%d]", i, cap(s.shards)))
 			return err

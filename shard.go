@@ -30,41 +30,44 @@ type shard struct {
 
 	// Mutex locks, reconnect to make sure there is only 1 process reconnecting and concurrent read/write accesses on the socket
 	readLock, writeLock sync.Mutex
-	reconnectLock       sync.Mutex
-	isReconnecting      bool
 
-	// Channels to pass around messages
-	closeMessage chan int
-	stopListen   chan bool
-	stopRead     chan bool
+	// Channels used to synchronize shutdown of this shards goroutines
+	isShuttingDown    bool
+	closeMainLoop     chan bool
+	closeConfirmation chan bool
 }
 
-func connectShard(session *Session, shardNum int) (*shard, error) {
-	conn, _, err := websocket.DefaultDialer.Dial(session.wsUrl, http.Header{})
-	if err != nil {
-		return nil, err
-	}
-
+// Shard constructor, automatically connects with the given shardNum
+func newShard(session *Session, shardNum int) (*shard, error) {
 	s := &shard{
-		session:      session,
-		webSocket:    conn,
-		shard:        shardNum,
-		closeMessage: make(chan int, 1),
-		stopListen:   make(chan bool),
-		stopRead:     make(chan bool),
+		session:           session,
+		shard:             shardNum,
+		closeMainLoop:     make(chan bool),
+		closeConfirmation: make(chan bool),
 	}
 
-	if err = s.handshake(); err != nil {
+	// These will be unlocked once a connection is made.
+	s.readLock.Lock()
+	s.writeLock.Lock()
+
+	if err := s.connect(); err != nil {
 		return nil, err
 	}
 
 	return s, nil
 }
 
-func (s *shard) handshake() error {
+// Builds a new connection with Discord, waits for the "hello" frame and then proceeds to identify itself to the Discord service
+func (s *shard) connect() error {
+	conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
+	if err != nil {
+		return err
+	}
+
+	s.webSocket = conn
 	s.webSocket.SetCloseHandler(s.onClose)
 
-	helloFrame, err := s.readFrame()
+	helloFrame, err := s.readFrame(true)
 	if err != nil {
 		return err
 	} else if helloFrame.Op != opHello {
@@ -88,6 +91,7 @@ func (s *shard) handshake() error {
 	return nil
 }
 
+// identify takes care of the identification using the bot token on the discord server
 func (s *shard) identify() error {
 	if s.sessionID != "" {
 		logger.Debugf("Resuming connection starting at sequence %d.", s.sequence)
@@ -95,7 +99,7 @@ func (s *shard) identify() error {
 			Token:     s.session.token,
 			SessionID: s.sessionID,
 			Sequence:  s.sequence,
-		}})
+		}}, true)
 	} else {
 		logger.Debugf("Identifying to websocket")
 		s.sendFrame(&gatewayFrame{opIdentify, identifyPayload{
@@ -108,16 +112,17 @@ func (s *shard) identify() error {
 				Browser: "DisGo",
 				Device:  "DisGo",
 			},
-		}})
+		}}, true)
 	}
 
 	for {
-		frame, err := s.readFrame()
+		frame, err := s.readFrame(true)
 		if err != nil {
 			return err
 		}
 
-		if frame.Op == opDispatch {
+		switch frame.Op {
+		case opDispatch:
 			switch frame.EventName {
 			case "READY":
 				ready := ReadyEvent{}
@@ -130,23 +135,29 @@ func (s *shard) identify() error {
 				fallthrough
 			case "RESUMED":
 				s.session.dispatchEvent(frame)
+
+				s.readLock.Unlock()
+				s.writeLock.Unlock()
+
 				return nil // Break out of the loop, we have what we want
 			default:
 				s.session.dispatchEvent(frame) // Nope, resume action, let's wait for more frames
 			}
-		} else if frame.Op == opInvalidSession {
+		case opInvalidSession:
 			s.sessionID = "" // Invalidate session and retry
-			s.identify()
-			return nil
-		} else {
+			return s.identify()
+		default:
 			return fmt.Errorf("Unexpected opCode received from Discord: %d", frame.Op)
 		}
 	}
 }
 
+// Main loop of the shard connection, also responsible for starting the read loop.
+// This goroutine will pass around all the messages through the rest of the library.
 func (s *shard) mainLoop() {
 	logger.Debugf("Starting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting main loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
+	defer func() { s.closeConfirmation <- true }()
 
 	heartbeat := time.NewTicker(time.Duration(s.heartbeat) * time.Millisecond)
 	defer heartbeat.Stop()
@@ -159,21 +170,21 @@ func (s *shard) mainLoop() {
 		select {
 		case <-heartbeat.C:
 			if !sentHeartBeat {
-				go s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence})
+				go s.sendFrame(&gatewayFrame{opHeartbeat, s.sequence}, false)
 				sentHeartBeat = true
 			} else {
-				go s.disconnect(websocket.CloseNoStatusReceived, "Did not respond to previous heartbeat")
+				go s.disconnect(websocket.ClosePolicyViolation, "Did not respond to previous heartbeat")
 			}
-		case <-s.stopListen:
+		case <-s.closeMainLoop:
 			return
 		case frame := <-reader:
 			switch frame.Op {
 			case opHeartbeat:
-				s.sendFrame(&gatewayFrame{Op: opHeartbeatAck})
+				s.sendFrame(&gatewayFrame{Op: opHeartbeatAck}, false)
 			case opHeartbeatAck:
 				sentHeartBeat = false
 			case opReconnect:
-				s.disconnect(websocket.CloseNormalClosure, "op Reconnect")
+				go s.disconnect(websocket.CloseNormalClosure, "op Reconnect")
 			case opInvalidSession:
 				s.sessionID = ""
 				s.identify()
@@ -186,51 +197,32 @@ func (s *shard) mainLoop() {
 	}
 }
 
-func (s *shard) sendFrame(frame *gatewayFrame) {
-	// Resume will only be sent within the reconnect lock, we don't relock to prevent a deadlock
-	if frame.Op != opIdentify && frame.Op != opResume {
-		s.reconnectLock.Lock()
-		defer s.reconnectLock.Unlock()
-	}
-
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-
-	logger.Debugf("Sending frame with opCode: %d", frame.Op)
-	s.webSocket.WriteJSON(frame)
-}
-
+// The secondary goroutine of each shard, responsible for reading frames and putting them in the channel.
 func (s *shard) readWebSocket(reader chan *receivedFrame) {
 	logger.Debugf("Starting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
 	defer logger.Debugf("Exiting read loop for shard [%d/%d]", s.shard+1, cap(s.session.shards))
+	defer func() { s.closeConfirmation <- true }()
 
 	for {
-		select {
-		case <-s.stopRead:
-			return
-		default:
-			frame, err := s.readFrame()
-			if err != nil {
-				if !s.session.isShuttingDown() {
-					if closeErr, isClose := err.(*websocket.CloseError); isClose {
-						s.closeMessage <- closeErr.Code
-					}
-					logger.ErrorE(err)
-					go s.disconnect(websocket.CloseProtocolError, err.Error())
-				}
-				<-s.stopRead // Wait for the connection to be closed
-				return
+		frame, err := s.readFrame(false)
+		if err != nil {
+			if !s.isShuttingDown {
+				go s.onClose(websocket.CloseAbnormalClosure, err.Error())
 			}
-
-			reader <- frame
+			return
 		}
+
+		reader <- frame
 	}
 
 }
 
-func (s *shard) readFrame() (*receivedFrame, error) {
-	s.readLock.Lock()
-	defer s.readLock.Unlock()
+// Reads 1 frame from the websocket.
+func (s *shard) readFrame(isConnecting bool) (*receivedFrame, error) {
+	if !isConnecting {
+		s.readLock.Lock()
+		defer s.readLock.Unlock()
+	}
 
 	logger.Tracef("Shard.readFrame() called")
 	msgType, msg, err := s.webSocket.ReadMessage()
@@ -260,75 +252,92 @@ func (s *shard) readFrame() (*receivedFrame, error) {
 
 	logger.Debugf("Received frame with opCode: %d", frame.Op)
 
-	if frame.Sequence != -1 {
+	if frame.Sequence > s.sequence {
 		logger.Tracef("Last sequence received set to %d.", frame.Sequence)
 		s.sequence = frame.Sequence
 	}
 	return &frame, nil
 }
 
-func (s *shard) startReconnect() {
-	if s.isReconnecting {
-		return
+// Sends 1 frame to the websocket
+func (s *shard) sendFrame(frame *gatewayFrame, isConnecting bool) {
+	if !isConnecting {
+		s.writeLock.Lock()
+		defer s.writeLock.Unlock()
 	}
 
-	s.reconnectLock.Lock()
-	s.isReconnecting = true
-	go s.reconnect()
+	logger.Debugf("Sending frame with opCode: %d", frame.Op)
+	s.webSocket.WriteJSON(frame)
 }
 
-func (s *shard) reconnect() {
-	if !s.session.isShuttingDown() {
-		logger.Noticef("Reconnecting shard [%d/%d]", s.shard+1, cap(s.session.shards))
-		conn, _, err := websocket.DefaultDialer.Dial(s.session.wsUrl, http.Header{})
-
-		if err == nil {
-			s.webSocket = conn
-			err = s.handshake()
-
-			if err != nil {
-				conn.Close()
-			}
-		}
-
-		if err != nil {
-			logger.ErrorE(err)
-			time.Sleep(1 * time.Second)
-			go s.reconnect()
-		} else {
-			s.isReconnecting = false
-			s.reconnectLock.Unlock()
-		}
-	}
-}
-
+// Called when we have received a closing intention that we have not initiated (ws close message, recv error)
 func (s *shard) onClose(code int, text string) error {
-	logger.Debugf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
-	s.closeMessage <- code
-	s.startReconnect()
-	return nil
-}
+	logger.Warnf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 
-func (s *shard) disconnect(code int, text string) {
-	logger.Tracef("Shard.disconnect() called")
-	s.stopListen <- true
-
+	s.isShuttingDown = true
+	s.stopRoutines()
+	s.readLock.Lock()
 	s.writeLock.Lock()
-	err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text))
-	s.writeLock.Unlock()
-	if err != nil {
+
+	if err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text)); err != nil {
+		logger.Error("Could not confirm close message.")
 		logger.ErrorE(err)
 	}
 
-	select {
-	case code := <-s.closeMessage:
-		logger.Debugf("Discord connection closed with code %d", code)
-	case <-time.After(1 * time.Second):
-		logger.Warn("Discord did not reply to the close message, force-closing connection.")
+	s.cleanupWebSocket()
+
+	return nil
+}
+
+// Called by us to disconnect the websocket (shutdown, protocol errors, missed heartbeats)
+func (s *shard) disconnect(code int, text string) {
+	s.isShuttingDown = true
+	s.writeLock.Lock()
+
+	closeMessage := make(chan int)
+	s.webSocket.SetCloseHandler(func(code int, _ string) error {
+		closeMessage <- code
+		return nil
+	})
+
+	if err := s.webSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(code, text)); err != nil {
+		logger.Error("Could not write close message to Discord, connection already dead?")
+		logger.ErrorE(err)
+	} else {
+		select {
+		case code := <-closeMessage:
+			logger.Debugf("Discord connection closed with code %d", code)
+		case <-time.After(1 * time.Second):
+			logger.Warn("Discord did not reply to the close message, force-closing connection.")
+		}
 	}
 
-	s.webSocket.Close()
-	s.stopRead <- true
+	s.stopRoutines()
+	s.readLock.Lock()
+	s.cleanupWebSocket()
+}
 
-	s.startReconnect()
+// Stops the two shard goroutines
+func (s *shard) stopRoutines() {
+	s.webSocket.SetReadDeadline(time.Now()) // Stop the read loop, in case it hasn't already due to an error
+	<-s.closeConfirmation                   // Wait for the read loop
+	s.closeMainLoop <- true                 // Stop the main loop
+	<-s.closeConfirmation                   // Wait for the main loop
+}
+
+// Cleans up the current websocket and tries to reconnect it if needed
+func (s *shard) cleanupWebSocket() {
+	s.webSocket.Close()
+	s.webSocket = nil
+
+	for !s.session.isShuttingDown() {
+		if err := s.connect(); err != nil {
+			logger.Error("Could not reconnect to Discord.")
+			logger.ErrorE(err)
+
+			time.Sleep(500 * time.Millisecond)
+		} else {
+			break
+		}
+	}
 }
