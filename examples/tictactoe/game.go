@@ -52,7 +52,7 @@ func (game *ticTacToe) start(channel disgo.Snowflake) disgo.Snowflake {
 		game.slots[i] = 0
 	}
 
-	board, err := game.discord.SendEmbed(channel, *game.buildBoard())
+	board, err := game.discord.SendEmbed(channel, game.buildBoard())
 	if err != nil {
 		logger.ErrorE(err)
 		return 0
