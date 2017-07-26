@@ -2,6 +2,7 @@ package disgo
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -27,31 +28,48 @@ func (s *Channel) Delete() error {
 	return s.session.DeleteChannel(s.ID())
 }
 
-type sendMessageBody struct {
+type MessagePrototype struct {
 	Content string `json:"content"`
+	TTS     bool   `json:"tts"`
 	Embed   *Embed `json:"embed,omitempty"`
+
+	FileName string
+	File     io.Reader
 }
 
 func (s *Session) SendMessage(channelID Snowflake, content string) (*Message, error) {
-	return s.sendMessageInternal(s.doHttpPost, EndPointMessages(channelID), &sendMessageBody{Content: content})
+	return s.SendMessageP(channelID, MessagePrototype{Content: content})
 }
 
-func (s *Session) SendEmbed(channelID Snowflake, embed Embed) (*Message, error) {
-	return s.sendMessageInternal(s.doHttpPost, EndPointMessages(channelID), &sendMessageBody{Content: "", Embed: &embed})
+func (s *Session) SendEmbed(channelID Snowflake, embed *Embed) (*Message, error) {
+	return s.SendMessageP(channelID, MessagePrototype{Embed: embed})
 }
 
-func (s *Session) SendEmbeddedMessage(channelID Snowflake, content string, embed Embed) (*Message, error) {
-	return s.sendMessageInternal(s.doHttpPost, EndPointMessages(channelID), &sendMessageBody{Content: content, Embed: &embed})
-}
-
-func (s *Session) SendFile(channelID Snowflake, filename string, file io.Reader) (*Message, error) {
+func (s *Session) SendMessageP(channelID Snowflake, prototype MessagePrototype) (*Message, error) {
 	message := &Message{}
-	err := s.doHttMultipartPost(EndPointMessages(channelID), func(writer *multipart.Writer) {
-		writer.WriteField("content", "")
-		if fileW, err := writer.CreateFormFile("file", filename); err == nil {
-			io.Copy(fileW, file)
+
+	var err error
+	if prototype.File == nil {
+		err = s.doHttpPost(EndPointMessages(channelID), &prototype, message)
+	} else {
+		if prototype.FileName == "" {
+			return nil, errors.New("A File was passed to a message without a FileName.")
 		}
-	}, message)
+
+		var jsonPayload []byte
+		jsonPayload, err = json.Marshal(&prototype)
+		err = s.doHttMultipartPost(EndPointMessages(channelID), func(writer *multipart.Writer) error {
+			writer.WriteField("payload_json", string(jsonPayload))
+
+			if fileW, err := writer.CreateFormFile("file", prototype.FileName); err == nil {
+				io.Copy(fileW, prototype.File)
+				return nil
+			} else {
+				return err
+			}
+		}, message)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -62,38 +80,24 @@ func (s *Session) SendFile(channelID Snowflake, filename string, file io.Reader)
 	return message, nil
 }
 
-func (s *Session) SendFileEmbed(channelID Snowflake, filename string, file io.Reader, embed Embed) (*Message, error) {
-	message := &Message{}
-	err := s.doHttMultipartPost(EndPointMessages(channelID), func(writer *multipart.Writer) {
-		jsonPayload, _ := json.Marshal(sendMessageBody{Embed: &embed})
-		writer.WriteField("payload_json", string(jsonPayload))
-		if fileW, err := writer.CreateFormFile("file", filename); err == nil {
-			io.Copy(fileW, file)
-		}
-	}, message)
-	if err != nil {
-		return nil, err
-	}
-	message = objects.registerMessage(message)
-	if message.session == nil {
-		message.session = s
-	}
-	return message, nil
+type editMessageBody struct {
+	Content string `json:"content,omitempty"`
+	Embed   *Embed `json:"embed,omitempty"`
 }
 
 func (s *Session) EditMessage(channelID, messageID Snowflake, content string) (*Message, error) {
-	return s.sendMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &sendMessageBody{Content: content})
+	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Content: content})
 }
 
 func (s *Session) EditEmbed(channelID, messageID Snowflake, embed Embed) (*Message, error) {
-	return s.sendMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &sendMessageBody{Embed: &embed})
+	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Embed: &embed})
 }
 
 func (s *Session) EditEmbeddedMessage(channelID, messageID Snowflake, content string, embed Embed) (*Message, error) {
-	return s.sendMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &sendMessageBody{Content: content, Embed: &embed})
+	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Content: content, Embed: &embed})
 }
 
-func (s *Session) sendMessageInternal(method func(endPoint EndPoint, body, target interface{}) error, endpoint EndPoint, body *sendMessageBody) (*Message, error) {
+func (s *Session) editMessageInternal(method func(endPoint EndPoint, body, target interface{}) error, endpoint EndPoint, body *editMessageBody) (*Message, error) {
 	message := &Message{}
 	err := method(endpoint, body, message)
 	if err != nil {

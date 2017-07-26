@@ -45,7 +45,7 @@ func TestMessageCreateDelete(t *testing.T) {
 
 func onGuildCreate(s *disgo.Session, event disgo.GuildCreateEvent) {
 	for _, channel := range event.Channels() {
-		if channel.Type() == "text" && channel.Name() == "bottest" {
+		if channel.Type() == disgo.ChannelTypeGuildText && channel.Name() == "bottest" {
 			_, err := s.SendMessage(channel.ID(), "I am going to delete this message!")
 			if err != nil {
 				logger.ErrorE(err)

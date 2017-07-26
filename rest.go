@@ -157,11 +157,14 @@ func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err e
 	return
 }
 
-func (s *Session) doHttMultipartPost(endPoint EndPoint, bodyWriter func(writer *multipart.Writer), target interface{}) (err error) {
+func (s *Session) doHttMultipartPost(endPoint EndPoint, bodyWriter func(writer *multipart.Writer) error, target interface{}) (err error) {
 	var buffer bytes.Buffer
 	mpW := multipart.NewWriter(&buffer)
 
-	bodyWriter(mpW)
+	err = bodyWriter(mpW)
+	if err != nil {
+		return
+	}
 	mpW.Close()
 
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
