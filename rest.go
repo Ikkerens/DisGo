@@ -11,8 +11,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/slf4go/logger"
 	"mime/multipart"
+
+	"github.com/slf4go/logger"
 )
 
 type EndPoint struct {
@@ -22,7 +23,7 @@ type EndPoint struct {
 }
 
 var (
-	BaseUrl = "https://discordapp.com/api"
+	BaseUrl = "https://discordapp.com/api/v" + gatewayVersion
 
 	EndPointGateway      = makeEndPoint("/gateway")
 	EndPointBotGateway   = makeEndPoint("/gateway/bot")
@@ -220,7 +221,6 @@ func (s *Session) doRequest(method, url string, contentType string, body io.Read
 	case http.StatusCreated:
 		if target != nil {
 			body := response.Body
-			defer body.Close()
 			if err = json.NewDecoder(body).Decode(target); err != nil {
 				return
 			}
