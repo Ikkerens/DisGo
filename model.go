@@ -56,6 +56,15 @@ func (s *Snowflake) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+func SnowflakeInSlice(a Snowflake, list []Snowflake) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 type UnixTimeStamp struct {
 	*time.Time
 }
