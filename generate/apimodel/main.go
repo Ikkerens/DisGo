@@ -138,6 +138,9 @@ func main() {
 
 			{{if .StateType}}
 			func (s *{{.Exported}}) setSession(session *Session) {
+				s.lock.Lock()
+				defer s.lock.Unlock()
+
 				s.session = session {{range .RegisteredFields}}
 				if s.internal.{{.}} != nil {
 					s.internal.{{.}}.session = session

@@ -92,6 +92,9 @@ func (s *Channel) UnmarshalJSON(b []byte) error {
 }
 
 func (s *Channel) setSession(session *Session) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	s.session = session
 	if s.internal.Recipients != nil {
 		for _, sub := range s.internal.Recipients {
@@ -295,6 +298,9 @@ func (s *Guild) UnmarshalJSON(b []byte) error {
 }
 
 func (s *Guild) setSession(session *Session) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	s.session = session
 	if s.internal.Roles != nil {
 		for _, sub := range s.internal.Roles {
@@ -579,6 +585,9 @@ func (s *Message) UnmarshalJSON(b []byte) error {
 }
 
 func (s *Message) setSession(session *Session) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	s.session = session
 	if s.internal.Author != nil {
 		s.internal.Author.session = session
@@ -833,6 +842,9 @@ func (s *Role) UnmarshalJSON(b []byte) error {
 }
 
 func (s *Role) setSession(session *Session) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	s.session = session
 }
 
@@ -931,6 +943,9 @@ func (s *User) UnmarshalJSON(b []byte) error {
 }
 
 func (s *User) setSession(session *Session) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	s.session = session
 }
 

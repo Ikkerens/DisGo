@@ -11,8 +11,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/slf4go/logger"
 	"mime/multipart"
+
+	"github.com/slf4go/logger"
 )
 
 type EndPoint struct {
@@ -22,7 +23,7 @@ type EndPoint struct {
 }
 
 var (
-	BaseUrl = "https://discordapp.com/api"
+	BaseUrl = "https://discordapp.com/api/v" + gatewayVersion
 
 	EndPointGateway      = makeEndPoint("/gateway")
 	EndPointBotGateway   = makeEndPoint("/gateway/bot")
@@ -157,11 +158,14 @@ func (s *Session) doHttpPost(endPoint EndPoint, body, target interface{}) (err e
 	return
 }
 
-func (s *Session) doHttMultipartPost(endPoint EndPoint, bodyWriter func(writer *multipart.Writer), target interface{}) (err error) {
+func (s *Session) doHttMultipartPost(endPoint EndPoint, bodyWriter func(writer *multipart.Writer) error, target interface{}) (err error) {
 	var buffer bytes.Buffer
 	mpW := multipart.NewWriter(&buffer)
 
-	bodyWriter(mpW)
+	err = bodyWriter(mpW)
+	if err != nil {
+		return
+	}
 	mpW.Close()
 
 	err = s.rateLimit(endPoint, func() (*http.Response, error) {
@@ -217,7 +221,6 @@ func (s *Session) doRequest(method, url string, contentType string, body io.Read
 	case http.StatusCreated:
 		if target != nil {
 			body := response.Body
-			defer body.Close()
 			if err = json.NewDecoder(body).Decode(target); err != nil {
 				return
 			}

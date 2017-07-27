@@ -8,3 +8,4 @@ before_script:
   - go generate -x
 script:
   - go install -x -v -race
+  - go test -v -race ./tests/ -args -token $TOKEN
