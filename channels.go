@@ -87,12 +87,12 @@ func (s *Session) SendMessageP(channelID Snowflake, prototype MessagePrototype) 
 }
 
 type editMessageBody struct {
-	Content string `json:"content,omitempty"`
-	Embed   *Embed `json:"embed,omitempty"`
+	Content *string `json:"content,omitempty"`
+	Embed   *Embed  `json:"embed,omitempty"`
 }
 
 func (s *Session) EditMessage(channelID, messageID Snowflake, content string) (*Message, error) {
-	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Content: content})
+	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Content: &content})
 }
 
 func (s *Session) EditEmbed(channelID, messageID Snowflake, embed Embed) (*Message, error) {
@@ -100,7 +100,7 @@ func (s *Session) EditEmbed(channelID, messageID Snowflake, embed Embed) (*Messa
 }
 
 func (s *Session) EditEmbeddedMessage(channelID, messageID Snowflake, content string, embed Embed) (*Message, error) {
-	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Content: content, Embed: &embed})
+	return s.editMessageInternal(s.doHttpPatch, EndPointMessage(channelID, messageID), &editMessageBody{Content: &content, Embed: &embed})
 }
 
 func (s *Session) editMessageInternal(method func(endPoint EndPoint, body, target interface{}) error, endpoint EndPoint, body *editMessageBody) (*Message, error) {
