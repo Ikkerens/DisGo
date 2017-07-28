@@ -6,8 +6,8 @@
 
     "features": {
         "rest": {
-            "channelCreate": "no",
-            "channelDelete": "no",
+            "channelCreate": "yes",
+            "channelDelete": "yes",
             "channelDM": "no",
             "channelEdit": "no",
             "channelHistory": "no",
@@ -22,7 +22,7 @@
             "messageDelete": "yes",
             "messageEdit": "yes",
             "messageSend": "yes",
-            "messageSendFile": "no",
+            "messageSendFile": "yes",
             "roleCreate": "no",
             "roleDelete": "no",
             "roleEdit": "no",
@@ -40,9 +40,9 @@
             "voiceMove": "no"
         },
         "ws": {
-            "channelCreate": "no",
+            "channelCreate": "yes",
             "channelDelete": "no",
-            "channelUpdate": "no",
+            "channelUpdate": "yes",
             "memberChunk": "no",
             "messageDelete": "no",
             "messageDeleteBulk": "no",
@@ -53,7 +53,7 @@
             "resume": "yes",
             "roleCreate": "no",
             "roleDelete": "no",
-            "roleUpdate": "no",
+            "roleUpdate": "yes",
             "serverBan": "no",
             "serverCreate": "no",
             "serverDelete": "no",
