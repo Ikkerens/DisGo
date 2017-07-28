@@ -20,6 +20,13 @@ func (s *Session) BuildChannel(guildID Snowflake, name string) *ChannelBuilder {
 	}
 }
 
+func (s *Channel) Guild() *Guild {
+	objects.guildLock.RLock()
+	defer objects.guildLock.RUnlock()
+
+	return objects.guilds[s.internal.GuildID]
+}
+
 func (s *Session) DeleteChannel(channelID Snowflake) error {
 	return s.doHttpDelete(EndPointChannel(channelID), nil)
 }
