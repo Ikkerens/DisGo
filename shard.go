@@ -25,7 +25,7 @@ type shard struct {
 	webSocket *websocket.Conn
 	shard     int
 	sessionID string
-	sequence  int
+	sequence  uint64
 	heartbeat int
 
 	// Mutex locks, reconnect to make sure there is only 1 process reconnecting and concurrent read/write accesses on the socket

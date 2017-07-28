@@ -32,7 +32,7 @@ type gatewayFrame struct {
 type receivedFrame struct {
 	Op        opCode          `json:"op"`
 	Data      json.RawMessage `json:"d,omitempty"`
-	Sequence  int             `json:"s,omitempty"`
+	Sequence  uint64          `json:"s,omitempty"`
 	EventName string          `json:"t,omitempty"`
 }
 
@@ -60,5 +60,5 @@ type propertiesPayload struct {
 type resumePayload struct {
 	Token     string `json:"token"`
 	SessionID string `json:"session_id"`
-	Sequence  int    `json:"seq"`
+	Sequence  uint64 `json:"seq"`
 }
