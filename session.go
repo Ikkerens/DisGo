@@ -37,7 +37,7 @@ func NewSelfBot(token string) (*Session, error) {
 	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
-	_, err := session.doRequest("GET", EndPointGateway().Url, "", nil, &gateway)
+	err := session.doHttpGet(EndPointGateway(), &gateway)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func NewBot(token string) (*Session, error) {
 	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
-	_, err := session.doRequest("GET", EndPointBotGateway().Url, "", nil, &gateway)
+	err := session.doHttpGet(EndPointBotGateway(), &gateway)
 	if err != nil {
 		return nil, err
 	}
