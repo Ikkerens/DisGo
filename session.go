@@ -30,7 +30,7 @@ func NewSelfBot(token string) (*Session, error) {
 	logger.Trace("NewSelfBot() called")
 
 	if token == "" {
-		return nil, errors.New("token cannot be empty")
+		panic("token cannot be empty")
 	}
 
 	session := &Session{tokenType: "", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
@@ -52,7 +52,7 @@ func NewBot(token string) (*Session, error) {
 	logger.Trace("NewBot() called")
 
 	if token == "" {
-		return nil, errors.New("token cannot be empty")
+		panic("token cannot be empty")
 	}
 
 	session := &Session{tokenType: "Bot ", token: token, rateLimitBuckets: make(map[string]*rateBucket)}

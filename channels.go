@@ -2,7 +2,6 @@ package disgo
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -60,7 +59,7 @@ func (s *Session) SendMessageP(channelID Snowflake, prototype MessagePrototype) 
 		err = s.doHttpPost(EndPointMessages(channelID), &prototype, message)
 	} else {
 		if prototype.FileName == "" {
-			return nil, errors.New("A File was passed to a message without a FileName.")
+			panic("A File was passed to a message without a FileName.")
 		}
 
 		var jsonPayload []byte

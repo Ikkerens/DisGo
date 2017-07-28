@@ -321,9 +321,9 @@ func (s *shard) disconnect(code int, text string) {
 	} else {
 		select {
 		case code := <-closeMessage:
-			logger.Debugf("Discord connection closed with code %d", code)
+			logger.Debugf("Discord connection closed (%d, '%s')", code, text)
 		case <-time.After(1 * time.Second):
-			logger.Warn("Discord did not reply to the close message, force-closing connection.")
+			logger.Warnf("Discord did not reply to the close message (%d, '%s'), force-closing connection.", code, text)
 		}
 	}
 
