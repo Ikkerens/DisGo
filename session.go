@@ -1,7 +1,6 @@
 package disgo
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
