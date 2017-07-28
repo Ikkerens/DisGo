@@ -257,7 +257,7 @@ func (s *shard) readFrame(isConnecting bool) (*receivedFrame, error) {
 		reader = zReader
 	}
 
-	frame := receivedFrame{Sequence: -1}
+	frame := receivedFrame{Sequence: 0}
 	err = json.NewDecoder(reader).Decode(&frame)
 	if err != nil {
 		return nil, err
