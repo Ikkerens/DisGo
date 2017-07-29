@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 )
 
 type modifyCurrentUser struct {
@@ -38,4 +39,49 @@ func (s *Session) modifyCurrentUser(modification modifyCurrentUser) (*User, erro
 		user.session = s
 	}
 	return user, nil
+}
+
+type Status string
+
+const (
+	StatusOnline    Status = "online"
+	StatusDND       Status = "dnd"
+	StatusIdle      Status = "idle"
+	StatusInvisible Status = "invisible"
+)
+
+func (s *Session) Status() Status {
+	return s.status
+}
+
+func (s *Session) SetStatus(status Status) {
+	s.SetStatusGame(status, s.game)
+}
+
+func (s *Session) SetGame(game *Game) {
+	if s.status == "" {
+		s.status = StatusOnline
+	}
+
+	s.SetStatusGame(s.status, game)
+}
+
+func (s *Session) SetStatusGame(status Status, game *Game) {
+	var since uint64 = 0
+
+	if status == StatusIdle {
+		since = uint64(time.Now().Unix() * 1000)
+	}
+
+	s.status = status
+	s.game = game
+
+	for _, shard := range s.shards {
+		shard.sendFrame(&gatewayFrame{opStatusUpdate, &statusPayload{
+			Game:   game,
+			Since:  since,
+			Status: status,
+			AFK:    status == StatusIdle,
+		}}, false)
+	}
 }

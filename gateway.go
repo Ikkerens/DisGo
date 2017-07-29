@@ -62,3 +62,10 @@ type resumePayload struct {
 	SessionID string `json:"session_id"`
 	Sequence  uint64 `json:"seq"`
 }
+
+type statusPayload struct {
+	Since  uint64 `json:"since"`
+	Game   *Game  `json:"game"`
+	Status Status `json:"status,string"`
+	AFK    bool   `json:"afk"`
+}

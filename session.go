@@ -23,6 +23,9 @@ type Session struct {
 	shards       []*shard
 	shuttingDown bool
 	stateLock    sync.RWMutex
+
+	status Status
+	game   *Game
 }
 
 func NewSelfBot(token string) (*Session, error) {
@@ -90,6 +93,8 @@ func (s *Session) Connect() error {
 			time.Sleep(5 * time.Second)
 		}
 	}
+
+	s.status = StatusOnline
 
 	return nil
 }
