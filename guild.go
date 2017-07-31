@@ -22,15 +22,6 @@ func (s *Session) RemoveGuildMemberRole(guildID, userID, roleID Snowflake) error
 	return s.doHttpDelete(EndPointGuildMemberRoles(guildID, userID, roleID), nil)
 }
 
-func (s *Guild) GetUserRoles(userID Snowflake) ([]Snowflake, bool) {
-	membership, exists := s.GetUserMembership(userID)
-	if exists {
-		return membership.RolesIDs(), true
-	}
-
-	return nil, false
-}
-
 func (s *Guild) GetRoleUsers(roleID Snowflake) []*User {
 	users := make([]*User, 0)
 
@@ -43,6 +34,15 @@ func (s *Guild) GetRoleUsers(roleID Snowflake) []*User {
 	return users
 }
 
+func (s *Guild) GetUserRoles(userID Snowflake) ([]Snowflake, bool) {
+	membership, exists := s.GetUserMembership(userID)
+	if exists {
+		return membership.RolesIDs(), true
+	}
+
+	return nil, false
+}
+
 func (s *Guild) GetUserMembership(userID Snowflake) (*GuildMember, bool) {
 	for _, membership := range s.internal.Members {
 		if membership.User().ID() == userID {
@@ -51,6 +51,28 @@ func (s *Guild) GetUserMembership(userID Snowflake) (*GuildMember, bool) {
 	}
 
 	return nil, false
+}
+
+func (s *Guild) GetUserColor(userID Snowflake) (int, bool) {
+	roles, inGuild := s.GetUserRoles(userID)
+	if !inGuild {
+		return 0, false
+	}
+
+	var (
+		highest *Role
+	)
+	for _, role := range s.internal.Roles {
+		if SnowflakeInSlice(role.internal.ID, roles) && (highest == nil || role.internal.Position > highest.internal.Position) && role.internal.Color != 0 {
+			highest = role
+		}
+	}
+
+	if highest != nil {
+		return highest.internal.Color, true
+	}
+
+	return 0, false
 }
 
 func (s *Session) KickUser(guildID, userID Snowflake) error {

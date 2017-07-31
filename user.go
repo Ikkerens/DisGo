@@ -20,3 +20,7 @@ func (s *User) AvatarURL() string {
 func (s *User) Mention() string {
 	return fmt.Sprintf("<@%s>", s.ID())
 }
+
+func (s *User) Color(guild *Guild) (int, bool) {
+	return guild.GetUserColor(s.internal.ID)
+}

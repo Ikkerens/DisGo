@@ -72,13 +72,6 @@ func NewBot(token string) (*Session, error) {
 	return session, nil
 }
 
-func registerInternalEvents(session *Session) {
-	session.registerEventHandler(onChannelCreate, false)
-	session.registerEventHandler(onChannelDelete, false)
-	session.registerEventHandler(onGuildMemberUpdate, false)
-	session.registerEventHandler(onGuildMemberAdd, false)
-}
-
 func (s *Session) Connect() error {
 	for i := 0; i < cap(s.shards); i++ {
 		shard, err := newShard(s, i)

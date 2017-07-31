@@ -19,6 +19,10 @@ func (s *Session) BuildChannel(guildID Snowflake, name string) *ChannelBuilder {
 	}
 }
 
+func (s *Channel) Mention() string {
+	return fmt.Sprintf("<#%s>", s.ID())
+}
+
 func (s *Channel) Guild() *Guild {
 	objects.guildLock.RLock()
 	defer objects.guildLock.RUnlock()

@@ -1,5 +1,28 @@
 package disgo
 
+func registerInternalEvents(session *Session) {
+	session.registerEventHandler(onReady, false)
+	session.registerEventHandler(onGuildCreate, false)
+	session.registerEventHandler(onChannelCreate, false)
+	session.registerEventHandler(onChannelDelete, false)
+	session.registerEventHandler(onGuildMemberUpdate, false)
+	session.registerEventHandler(onGuildMemberAdd, false)
+}
+
+func onReady(_ *Session, e ReadyEvent) {
+	for _, guild := range e.Guilds {
+		for _, channel := range guild.Channels() {
+			channel.internal.GuildID = guild.internal.ID
+		}
+	}
+}
+
+func onGuildCreate(_ *Session, e GuildCreateEvent) {
+	for _, channel := range e.Channels() {
+		channel.internal.GuildID = e.internal.ID
+	}
+}
+
 func onGuildMemberAdd(_ *Session, e GuildMemberAddEvent) {
 	objects.guildLock.RLock()
 	guild, exists := objects.guilds[e.GuildID]
