@@ -187,6 +187,13 @@ func (s *Session) GetMessages(channelID Snowflake, mode GetMessagesMode, target 
 	return messages, nil
 }
 
+func (s *Message) Channel() *Channel {
+	objects.channelLock.RLock()
+	defer objects.channelLock.RUnlock()
+
+	return objects.channels[s.internal.ChannelID]
+}
+
 func (s *Message) Edit(content string) (err error) {
 	_, err = s.session.EditMessage(s.internal.ChannelID, s.internal.ID, content)
 	return
