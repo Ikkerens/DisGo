@@ -219,7 +219,7 @@ func (s *shard) readWebSocket(reader chan *receivedFrame) {
 	for {
 		frame, err := s.readFrame(false)
 		if err != nil {
-			if !s.isShuttingDown {
+			if _, isCloseError := err.(*websocket.CloseError); !s.isShuttingDown && !isCloseError {
 				s.onClose(websocket.CloseAbnormalClosure, err.Error())
 			}
 			return
@@ -285,10 +285,10 @@ func (s *shard) sendFrame(frame *gatewayFrame, isConnecting bool) {
 
 // Called when we have received a closing intention that we have not initiated (ws close message, recv error)
 func (s *shard) onClose(code int, text string) error {
+	logger.Warnf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 	s.webSocket.SetCloseHandler(func(code int, _ string) error { return nil })
 
 	go func() {
-		logger.Warnf("Received Close Frame from Discord. Code: %d. Text: %s", code, text)
 
 		s.isShuttingDown = true
 		s.stopRoutines()
