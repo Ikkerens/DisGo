@@ -1,5 +1,7 @@
 package disgo
 
+import "encoding/json"
+
 //go:generate go run generate/eventmethods/main.go
 
 type ReadyEvent struct {
@@ -43,9 +45,45 @@ type GuildBanAddEvent struct {
 	GuildID Snowflake `json:"guild_id"`
 }
 
+func (e *GuildBanAddEvent) UnmarshalJSON(b []byte) error {
+	data := struct {
+		GuildID Snowflake `json:"guild_id"`
+	}{}
+
+	// Unmarshal Embed
+	if err := json.Unmarshal(b, e.User); err != nil {
+		return err
+	}
+	// Unmarshal fields
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+
+	e.GuildID = data.GuildID
+	return nil
+}
+
 type GuildBanRemoveEvent struct {
 	*User
 	GuildID Snowflake `json:"guild_id"`
+}
+
+func (e *GuildBanRemoveEvent) UnmarshalJSON(b []byte) error {
+	data := struct {
+		GuildID Snowflake `json:"guild_id"`
+	}{}
+
+	// Unmarshal Embed
+	if err := json.Unmarshal(b, e.User); err != nil {
+		return err
+	}
+	// Unmarshal fields
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+
+	e.GuildID = data.GuildID
+	return nil
 }
 
 type GuildEmojisUpdateEvent struct {
@@ -60,6 +98,24 @@ type GuildIntegrationsUpdateEvent struct {
 type GuildMemberAddEvent struct {
 	*GuildMember
 	GuildID Snowflake `json:"guild_id"`
+}
+
+func (e *GuildMemberAddEvent) UnmarshalJSON(b []byte) error {
+	data := struct {
+		GuildID Snowflake `json:"guild_id"`
+	}{}
+
+	// Unmarshal Embed
+	if err := json.Unmarshal(b, e.GuildMember); err != nil {
+		return err
+	}
+	// Unmarshal fields
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+
+	e.GuildID = data.GuildID
+	return nil
 }
 
 type GuildMemberRemoveEvent struct {

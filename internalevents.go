@@ -33,7 +33,7 @@ func onGuildMemberAdd(_ *Session, e GuildMemberAddEvent) {
 		defer guild.lock.Unlock()
 
 		for i, member := range guild.internal.Members {
-			if member.User().ID() == e.GuildMember.User().ID() {
+			if member.internal.User.internal.ID == e.GuildMember.internal.User.internal.ID {
 				guild.internal.Members[i] = e.GuildMember
 				return
 			}

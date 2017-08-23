@@ -1,5 +1,7 @@
 package disgo
 
+import "strconv"
+
 func (s *Guild) BuildChannel(name string) *ChannelBuilder {
 	return s.session.BuildChannel(s.internal.ID, name)
 }
@@ -77,4 +79,27 @@ func (s *Guild) GetUserColor(userID Snowflake) (int, bool) {
 
 func (s *Session) KickUser(guildID, userID Snowflake) error {
 	return s.doHttpDelete(EndPointGuildMember(guildID, userID), nil)
+}
+
+func (s *Guild) KickUser(userID Snowflake) error {
+	return s.session.KickUser(s.internal.ID, userID)
+}
+
+func (s *Session) BanUser(guildID, userID Snowflake, deleteMessageDays int) error {
+	endPoint := EndPointGuildMemberBan(guildID, userID)
+	endPoint.Url += "?delete-message-days=" + strconv.FormatInt(int64(deleteMessageDays), 10)
+
+	return s.doHttpPut(endPoint, nil)
+}
+
+func (s *Guild) BanUser(userID Snowflake, deleteMessageDays int) error {
+	return s.session.BanUser(s.internal.ID, userID, deleteMessageDays)
+}
+
+func (s *Session) UnbanUser(guildID, userID Snowflake) error {
+	return s.doHttpDelete(EndPointGuildMemberBan(guildID, userID), nil)
+}
+
+func (s *Guild) UnbanUser(userID Snowflake) error {
+	return s.session.UnbanUser(s.internal.ID, userID)
 }

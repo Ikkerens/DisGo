@@ -85,3 +85,20 @@ func (s *Session) SetStatusGame(status Status, game *Game) {
 		}}, false)
 	}
 }
+
+func (s *Session) GetDMChannel(userID Snowflake) (*Channel, error) {
+	recipient := struct {
+		RecipientID Snowflake `json:"recipient_id"`
+	}{userID}
+
+	channel := &Channel{}
+	err := s.doHttpPost(EndPointDMChannels(), recipient, channel)
+	if err != nil {
+		return nil, err
+	}
+	channel = objects.registerChannel(channel)
+	if channel.session == nil {
+		channel.session = s
+	}
+	return channel, nil
+}
