@@ -7,6 +7,7 @@ func registerInternalEvents(session *Session) {
 	session.registerEventHandler(onChannelDelete, false)
 	session.registerEventHandler(onGuildMemberUpdate, false)
 	session.registerEventHandler(onGuildMemberAdd, false)
+	session.registerEventHandler(onGuildMemberRemove, false)
 }
 
 func onReady(_ *Session, e ReadyEvent) {
@@ -40,6 +41,24 @@ func onGuildMemberAdd(_ *Session, e GuildMemberAddEvent) {
 		}
 
 		guild.internal.Members = append(guild.internal.Members, e.GuildMember)
+	}
+}
+
+func onGuildMemberRemove(_ *Session, e GuildMemberRemoveEvent) {
+	objects.guildLock.RLock()
+	guild, exists := objects.guilds[e.GuildID]
+	objects.guildLock.RUnlock()
+
+	if exists {
+		guild.lock.Lock()
+		defer guild.lock.Unlock()
+
+		for i, member := range guild.internal.Members {
+			if member.internal.User.internal.ID == e.User.internal.ID {
+				guild.internal.Members = append(guild.internal.Members[:i], guild.internal.Members[i+1:]...)
+				return
+			}
+		}
 	}
 }
 
