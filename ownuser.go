@@ -86,6 +86,13 @@ func (s *Session) SetStatusGame(status Status, game *Game) {
 	}
 }
 
+func (s *shard) setSelfbotStatus() {
+	s.sendFrame(&gatewayFrame{opStatusUpdate, &statusPayload{
+		AFK:    true,
+		Status: StatusInvisible,
+	}}, false)
+}
+
 func (s *Session) GetDMChannel(userID Snowflake) (*Channel, error) {
 	recipient := struct {
 		RecipientID Snowflake `json:"recipient_id"`

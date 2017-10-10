@@ -191,13 +191,7 @@ func (s *shard) mainLoop() {
 				case <-stopAfk:
 					return
 				case <-timer.C:
-					s.sendFrame(&gatewayFrame{
-						Op: opStatusUpdate,
-						Data: struct {
-							Afk    bool   `json:"afk"`
-							Status string `json:"status"`
-						}{true, "invisible"},
-					}, false)
+					s.setSelfbotStatus()
 				}
 			}
 		}()
