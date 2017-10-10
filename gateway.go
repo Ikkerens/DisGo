@@ -66,6 +66,6 @@ type resumePayload struct {
 type statusPayload struct {
 	Since  uint64 `json:"since,omitempty"`
 	Game   *Game  `json:"game,omitempty"`
-	Status Status `json:"status,string"`
+	Status Status `json:"status"`
 	AFK    bool   `json:"afk"`
 }

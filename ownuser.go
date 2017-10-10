@@ -87,9 +87,14 @@ func (s *Session) SetStatusGame(status Status, game *Game) {
 }
 
 func (s *shard) setSelfbotStatus() {
-	s.sendFrame(&gatewayFrame{opStatusUpdate, &statusPayload{
-		AFK:    true,
+	s.sendFrame(&gatewayFrame{opStatusUpdate, struct {
+		Status Status      `json:"status"`
+		AFK    bool        `json:"afk"`
+		Since  int         `json:"since"`
+		Game   interface{} `json:"game"`
+	}{
 		Status: StatusInvisible,
+		AFK:    true,
 	}}, false)
 }
 
