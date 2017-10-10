@@ -77,6 +77,18 @@ func (s *Guild) GetUserColor(userID Snowflake) (int, bool) {
 	return 0, false
 }
 
+type updateGuildMember struct {
+	Nick      string       `json:"nick,omitempty"`
+	Roles     *[]Snowflake `json:"roles,omitempty"`
+	Mute      *bool        `json:"mute,omitempty"`
+	Deaf      *bool        `json:"deaf,omitempty"`
+	ChannelID *Snowflake   `json:"channel_id,omitempty"`
+}
+
+func (s *Session) SetUserNick(guildID, userID Snowflake, nick string) error {
+	return s.doHttpPatch(EndPointGuildMember(guildID, userID), updateGuildMember{Nick: nick}, nil)
+}
+
 func (s *Session) KickUser(guildID, userID Snowflake) error {
 	return s.doHttpDelete(EndPointGuildMember(guildID, userID), nil)
 }
