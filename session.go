@@ -36,7 +36,7 @@ func NewSelfBot(token string) (*Session, error) {
 		panic("token cannot be empty")
 	}
 
-	session := &Session{tokenType: "", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
+	session := &Session{tokenType: "", token: token, selfbot: true, rateLimitBuckets: make(map[string]*rateBucket)}
 	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
@@ -58,7 +58,7 @@ func NewBot(token string) (*Session, error) {
 		panic("token cannot be empty")
 	}
 
-	session := &Session{tokenType: "Bot ", token: token, selfbot: true, rateLimitBuckets: make(map[string]*rateBucket)}
+	session := &Session{tokenType: "Bot ", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
 	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
