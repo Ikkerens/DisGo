@@ -179,6 +179,30 @@ func (s *shard) mainLoop() {
 	reader := make(chan *receivedFrame, 1)
 	go s.readWebSocket(reader)
 
+	if s.session.selfbot {
+		stopAfk := make(chan bool)
+		defer func() { stopAfk <- true }()
+		go func() {
+			timer := time.NewTicker(10 * time.Minute)
+			defer timer.Stop()
+
+			for {
+				select {
+				case <-stopAfk:
+					return
+				case <-timer.C:
+					s.sendFrame(&gatewayFrame{
+						Op: opStatusUpdate,
+						Data: struct {
+							Afk    bool   `json:"afk"`
+							Status string `json:"status"`
+						}{true, "invisible"},
+					}, false)
+				}
+			}
+		}()
+	}
+
 	for {
 		select {
 		case <-heartbeat.C:

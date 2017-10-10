@@ -14,6 +14,7 @@ const gatewayVersion = "6"
 type Session struct {
 	token     string
 	tokenType string
+	selfbot   bool
 	wsUrl     string
 
 	rateLimitBuckets map[string]*rateBucket
@@ -57,7 +58,7 @@ func NewBot(token string) (*Session, error) {
 		panic("token cannot be empty")
 	}
 
-	session := &Session{tokenType: "Bot ", token: token, rateLimitBuckets: make(map[string]*rateBucket)}
+	session := &Session{tokenType: "Bot ", token: token, selfbot: true, rateLimitBuckets: make(map[string]*rateBucket)}
 	registerInternalEvents(session)
 
 	gateway := gatewayGetResponse{}
