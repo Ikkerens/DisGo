@@ -354,10 +354,12 @@ func (s *shard) disconnect(code int, text string) {
 
 // Stops the two shard goroutines
 func (s *shard) stopRoutines() {
-	s.webSocket.SetReadDeadline(time.Now()) // Stop the read loop, in case it hasn't already due to an error
-	<-s.closeConfirmation                   // Wait for the read loop
-	s.closeMainLoop <- true                 // Stop the main loop
-	<-s.closeConfirmation                   // Wait for the main loop
+	if s.webSocket != nil {
+		s.webSocket.SetReadDeadline(time.Now()) // Stop the read loop, in case it hasn't already due to an error
+		<-s.closeConfirmation                   // Wait for the read loop
+		s.closeMainLoop <- true                 // Stop the main loop
+		<-s.closeConfirmation                   // Wait for the main loop
+	}
 }
 
 // Cleans up the current websocket and tries to reconnect it if needed
