@@ -8,9 +8,13 @@ func registerInternalEvents(session *Session) {
 	session.registerEventHandler(onGuildMemberUpdate, false)
 	session.registerEventHandler(onGuildMemberAdd, false)
 	session.registerEventHandler(onGuildMemberRemove, false)
+	session.registerEventHandler(onMessageReactionAdd, false)
+	session.registerEventHandler(onMessageReactionRemove, false)
 }
 
 func onReady(_ *Session, e ReadyEvent) {
+	botID = e.User.internal.ID
+
 	for _, guild := range e.Guilds {
 		for _, channel := range guild.Channels() {
 			channel.internal.GuildID = guild.internal.ID
@@ -112,6 +116,52 @@ func onChannelDelete(_ *Session, e ChannelDeleteEvent) {
 
 		if index != -1 {
 			guild.internal.Channels = append(guild.internal.Channels[:index], guild.internal.Channels[index+1:]...)
+		}
+	}
+}
+
+func onMessageReactionAdd(_ *Session, e MessageReactionAddEvent) {
+	objects.messageLock.Lock()
+	msg, exists := objects.messages[e.MessageID]
+
+	if exists {
+		msg.lock.Lock()
+		defer msg.lock.Unlock()
+
+		for i, := range msg.internal.Reactions {
+			reaction := &msg.internal.Reactions[i]
+			if reaction.internal.Emoji.internal.Name == e.Emoji.internal.Name {
+				reaction.internal.Count++
+
+				if e.UserID == botID {
+					reaction.internal.Me = true
+				}
+
+				break
+			}
+		}
+	}
+}
+
+func onMessageReactionRemove(_ *Session, e MessageReactionRemoveEvent) {
+	objects.messageLock.Lock()
+	msg, exists := objects.messages[e.MessageID]
+
+	if exists {
+		msg.lock.Lock()
+		defer msg.lock.Unlock()
+
+		for i, := range msg.internal.Reactions {
+			reaction := &msg.internal.Reactions[i]
+			if reaction.internal.Emoji.internal.Name == e.Emoji.internal.Name {
+				reaction.internal.Count--
+
+				if e.UserID == botID {
+					reaction.internal.Me = false
+				}
+
+				break
+			}
 		}
 	}
 }

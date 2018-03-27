@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var botID Snowflake
+
 type modifyCurrentUser struct {
 	Username string `json:"username,omitempty"`
 	Avatar   string `json:"avatar,omitempty"`
