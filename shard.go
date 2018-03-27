@@ -90,7 +90,7 @@ func (s *shard) connect() error {
 		return err
 	}
 
-	// We've succesfully connected.
+	// We've successfully connected.
 	logger.Debugf("Connected to Discord servers: %s", strings.Join(hello.Servers, ", "))
 	logger.Debugf("Setting up a heartbeat interval of %d ms", hello.HeartbeatInterval)
 	s.heartbeat = hello.HeartbeatInterval
@@ -100,7 +100,7 @@ func (s *shard) connect() error {
 		return err
 	}
 
-	// Identification succesful, unlock reading/writing and start the goroutines
+	// Identification successful, unlock reading/writing and start the goroutines
 	s.readLock.Unlock()
 	s.writeLock.Unlock()
 	go s.mainLoop()
