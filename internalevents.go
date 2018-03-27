@@ -128,7 +128,7 @@ func onMessageReactionAdd(_ *Session, e MessageReactionAddEvent) {
 		msg.lock.Lock()
 		defer msg.lock.Unlock()
 
-		for i, := range msg.internal.Reactions {
+		for i := range msg.internal.Reactions {
 			reaction := &msg.internal.Reactions[i]
 			if reaction.internal.Emoji.internal.Name == e.Emoji.internal.Name {
 				reaction.internal.Count++
@@ -151,7 +151,7 @@ func onMessageReactionRemove(_ *Session, e MessageReactionRemoveEvent) {
 		msg.lock.Lock()
 		defer msg.lock.Unlock()
 
-		for i, := range msg.internal.Reactions {
+		for i := range msg.internal.Reactions {
 			reaction := &msg.internal.Reactions[i]
 			if reaction.internal.Emoji.internal.Name == e.Emoji.internal.Name {
 				reaction.internal.Count--
